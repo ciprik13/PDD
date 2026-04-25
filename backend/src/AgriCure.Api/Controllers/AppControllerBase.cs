@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using AgriCure.Application.Common.Auth;
+using AgriCure.Application.Common.Exceptions;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
@@ -53,6 +54,17 @@ public abstract class AppControllerBase : ControllerBase
                 title: "Authentication failed.",
                 detail: ex.Message,
                 statusCode: StatusCodes.Status401Unauthorized);
+        }
+        catch (NotFoundException ex)
+        {
+            Logger.LogInformation(
+                "Resource not found in {Controller}.{Action}: {Message}",
+                controllerName, actionName, ex.Message);
+
+            return Problem(
+                title: "Not found.",
+                detail: ex.Message,
+                statusCode: StatusCodes.Status404NotFound);
         }
         catch (Exception ex)
         {
