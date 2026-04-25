@@ -6,6 +6,7 @@ using AgriCure.Infrastructure;
 using Hangfire;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.OpenApi.Models;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +28,44 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure();
 builder.Services.AddHangfireInfrastructure();
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(opts =>
+{
+    opts.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "AgriCure API",
+        Version = "v1",
+        Description = "Plant disease detection API for the AgriCure dashboard.",
+    });
+
+    opts.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "JWT bearer auth. Paste the access token from POST /api/auth/login.",
+    });
+
+    opts.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecurityScheme
+        {
+            Reference = new OpenApiReference
+            {
+                Type = ReferenceType.SecurityScheme,
+                Id = "Bearer",
+            },
+        }] = Array.Empty<string>(),
+    });
+
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, "AgriCure.Api.xml");
+    if (File.Exists(xmlPath))
+    {
+        opts.IncludeXmlComments(xmlPath);
+    }
+});
+
 builder.Services.AddTransient<DailyDetectionSummaryJob>();
 
 builder.Services.AddHealthChecks()
@@ -43,6 +82,9 @@ builder.Services.AddHealthChecks()
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseAuthentication();
 app.UseAuthorization();
