@@ -61,6 +61,9 @@ public static class DependencyInjection
             .Validate(o => !string.IsNullOrWhiteSpace(o.Audience), "Jwt:Audience is required.")
             .ValidateOnStart();
 
+        services.AddOptions<AdminSeedOptions>()
+            .BindConfiguration(AdminSeedOptions.SectionName);
+
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IIdentityService, IdentityService>();

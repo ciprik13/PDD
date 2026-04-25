@@ -3,6 +3,7 @@ using AgriCure.Api.Hangfire;
 using AgriCure.Application;
 using AgriCure.Application.Jobs;
 using AgriCure.Infrastructure;
+using AgriCure.Infrastructure.Identity;
 using Hangfire;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -93,6 +94,8 @@ if (app.Environment.IsDevelopment())
 {
     await app.Services.ApplyMigrationsAsync();
 }
+
+await app.Services.SeedIdentityAsync();
 
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
