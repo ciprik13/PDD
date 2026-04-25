@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using AgriCure.Api.Hangfire;
 using AgriCure.Application;
 using AgriCure.Application.Jobs;
@@ -24,7 +26,19 @@ builder.Host.UseSerilog((ctx, services, cfg) => cfg
         shared: true,
         formatProvider: CultureInfo.InvariantCulture));
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(opts =>
+    {
+        opts.JsonSerializerOptions.Converters.Add(
+            new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower));
+    });
+
+builder.Services.ConfigureHttpJsonOptions(opts =>
+{
+    opts.SerializerOptions.Converters.Add(
+        new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower));
+});
+
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure();
 builder.Services.AddHangfireInfrastructure();
