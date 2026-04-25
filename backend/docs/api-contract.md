@@ -15,37 +15,46 @@ All endpoints live under `/api/...`.
 
 ## Authentication
 
-JSON Web Tokens (JWT) issued by the backend's `AuthController` (PR #4 onward). Two-token flow:
+JSON Web Tokens (JWT) issued by `AuthController`. Two-token flow:
 
-- **Access token** — short-lived (15 minutes). Sent via `Authorization: Bearer <token>` on every protected call.
-- **Refresh token** — long-lived (7 days), rotates on use. Stored server-side so we can revoke.
+- **Access token** — short-lived (15 minutes by default). Sent via `Authorization: Bearer <token>` on every protected call.
+- **Refresh token** — long-lived (7 days by default), rotates on use. Stored server-side so we can revoke.
+
+All four endpoints accept JSON request bodies and return JSON.
 
 ```bash
-# Register
+# Register — creates a user with the `user` role.
 curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email":"dev@agricure.test","password":"strong-password-123!"}'
+  -d '{"email":"dev@agricure.test","password":"P@ssw0rd!ABC"}'
 
-# Login
+# Login — same shape.
 curl -X POST http://localhost:8080/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"dev@agricure.test","password":"strong-password-123!"}'
-# -> { "accessToken": "...", "refreshToken": "...", "expiresInSeconds": 900 }
+  -d '{"email":"dev@agricure.test","password":"P@ssw0rd!ABC"}'
+# -> {
+#      "accessToken": "...",
+#      "accessTokenExpiresAt": "2026-04-25T14:47:09.000Z",
+#      "refreshToken": "...",
+#      "refreshTokenExpiresAt": "2026-05-02T14:32:09.000Z"
+#    }
 
-# Use access token
+# Use access token on a protected call.
 curl http://localhost:8080/api/detections \
   -H "Authorization: Bearer <accessToken>"
 
-# Refresh
+# Refresh — old refresh token is revoked, new pair issued.
 curl -X POST http://localhost:8080/api/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{"refreshToken":"..."}'
 
-# Logout (revokes the refresh token)
+# Logout — idempotent; revokes the refresh token.
 curl -X POST http://localhost:8080/api/auth/logout \
-  -H "Authorization: Bearer <accessToken>" \
+  -H "Content-Type: application/json" \
   -d '{"refreshToken":"..."}'
 ```
+
+The Hangfire dashboard at `/hangfire` requires the **admin** role; seed the admin user via `Admin:Email` / `Admin:Password` env vars.
 
 ## JSON conventions
 

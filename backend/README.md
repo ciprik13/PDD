@@ -48,11 +48,41 @@ Migrations run automatically on startup in the `Development` environment.
 | Service | Port | Path |
 |---|---|---|
 | API | 8080 | `/` |
-| Swagger UI | 8080 | `/swagger` *(PR #4)* |
-| Hangfire dashboard | 8080 | `/hangfire` (dev-only filter; admin-role filter lands in PR #4) |
+| Swagger UI | 8080 | `/swagger` |
+| Hangfire dashboard | 8080 | `/hangfire` (admin role required) |
 | PostgreSQL | 5432 | — |
 | Health (liveness, "self") | 8080 | `/health` |
 | Health (readiness — Postgres + Hangfire) | 8080 | `/health/ready` |
+
+## Authentication
+
+JWT bearer with refresh-token rotation. All endpoints under `/api/auth/*` are anonymous; everything else expects a bearer token (or is explicitly `[AllowAnonymous]`).
+
+```bash
+# Register (creates a user with the `user` role).
+curl -s -X POST http://localhost:8080/api/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"me@example.com","password":"P@ssw0rd!ABC"}'
+
+# Login (same shape).
+curl -s -X POST http://localhost:8080/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"me@example.com","password":"P@ssw0rd!ABC"}'
+
+# Refresh — rotates both tokens, revokes the old refresh token.
+curl -s -X POST http://localhost:8080/api/auth/refresh \
+  -H 'Content-Type: application/json' \
+  -d '{"refreshToken":"<refresh-from-login>"}'
+
+# Logout (idempotent).
+curl -s -X POST http://localhost:8080/api/auth/logout \
+  -H 'Content-Type: application/json' \
+  -d '{"refreshToken":"<refresh-from-login>"}'
+```
+
+In Swagger, click **Authorize** at the top right and paste the access token (without the `Bearer ` prefix) to call protected endpoints.
+
+The admin user is seeded on startup from `Admin:Email` / `Admin:Password` (set in `.env`). Hangfire dashboard at `/hangfire` requires that admin role.
 
 In production, run with the override skipped so host ports aren't bound:
 
