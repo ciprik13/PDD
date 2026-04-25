@@ -1,5 +1,6 @@
 using System.Globalization;
 using AgriCure.Api.Hangfire;
+using AgriCure.Application;
 using AgriCure.Application.Jobs;
 using AgriCure.Infrastructure;
 using Hangfire;
@@ -22,6 +23,7 @@ builder.Host.UseSerilog((ctx, services, cfg) => cfg
         formatProvider: CultureInfo.InvariantCulture));
 
 builder.Services.AddControllers();
+builder.Services.AddApplication();
 builder.Services.AddInfrastructure();
 builder.Services.AddHangfireInfrastructure();
 
@@ -31,9 +33,9 @@ builder.Services.AddHealthChecks()
     .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["self"])
     .AddNpgSql(
         sp => sp.GetRequiredService<IConfiguration>()
-            .GetConnectionString(DependencyInjection.DefaultConnectionStringName)
+            .GetConnectionString(AgriCure.Infrastructure.DependencyInjection.DefaultConnectionStringName)
             ?? throw new InvalidOperationException(
-                $"Connection string '{DependencyInjection.DefaultConnectionStringName}' is required."),
+                $"Connection string '{AgriCure.Infrastructure.DependencyInjection.DefaultConnectionStringName}' is required."),
         name: "postgres",
         tags: ["ready"])
     .AddHangfire(opts => opts.MinimumAvailableServers = 1, name: "hangfire", tags: ["ready"]);
@@ -41,6 +43,9 @@ builder.Services.AddHealthChecks()
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())
 {
