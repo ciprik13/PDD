@@ -58,14 +58,16 @@ The Hangfire dashboard at `/hangfire` requires the **admin** role; seed the admi
 
 ## Detections (`/api/detections`)
 
-Plant-disease detection events emitted by edge devices (Jetson + YOLOv8). Reads are anonymous; writes require a JWT bearer token.
+Plant-disease detection events emitted by edge devices (Jetson + YOLOv8). **All actions require a JWT bearer token** (reads included).
 
 ```bash
 # List newest first (limit 1–200, default 20).
-curl http://localhost:8080/api/detections?limit=50
+curl http://localhost:8080/api/detections?limit=50 \
+  -H "Authorization: Bearer <accessToken>"
 
 # Single detection.
-curl http://localhost:8080/api/detections/<id>
+curl http://localhost:8080/api/detections/<id> \
+  -H "Authorization: Bearer <accessToken>"
 
 # Ingest a new detection (edge device).
 curl -X POST http://localhost:8080/api/detections \

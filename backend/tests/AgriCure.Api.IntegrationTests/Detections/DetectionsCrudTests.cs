@@ -19,13 +19,10 @@ public class DetectionsCrudTests
     {
         var authed = await _factory.CreateAuthenticatedClientAsync();
 
-        // Create a detection (timestamp is "now" inside BuildCreateBody).
         var createResp = await authed.PostAsJsonAsync("/api/detections", DetectionTestData.BuildCreateBody());
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        // Anonymous read works.
-        var anon = _factory.CreateClient();
-        var listResp = await anon.GetAsync("/api/detections?limit=50");
+        var listResp = await authed.GetAsync("/api/detections?limit=50");
         listResp.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var json = await listResp.Content.ReadAsStringAsync();
@@ -35,18 +32,34 @@ public class DetectionsCrudTests
     }
 
     [Fact]
-    public async Task Get_list_with_zero_limit_returns_400()
+    public async Task Get_list_without_token_returns_401()
     {
         var anon = _factory.CreateClient();
-        var resp = await anon.GetAsync("/api/detections?limit=0");
+        var resp = await anon.GetAsync("/api/detections");
+        resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
+
+    [Fact]
+    public async Task Get_list_with_zero_limit_returns_400()
+    {
+        var authed = await _factory.CreateAuthenticatedClientAsync();
+        var resp = await authed.GetAsync("/api/detections?limit=0");
         resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task Get_by_id_without_token_returns_401()
+    {
+        var anon = _factory.CreateClient();
+        var resp = await anon.GetAsync($"/api/detections/{Guid.NewGuid()}");
+        resp.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task Get_by_id_returns_404_for_missing()
     {
-        var anon = _factory.CreateClient();
-        var resp = await anon.GetAsync($"/api/detections/{Guid.NewGuid()}");
+        var authed = await _factory.CreateAuthenticatedClientAsync();
+        var resp = await authed.GetAsync($"/api/detections/{Guid.NewGuid()}");
         resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
@@ -60,8 +73,7 @@ public class DetectionsCrudTests
         var location = createResp.Headers.Location;
         location.Should().NotBeNull();
 
-        var anon = _factory.CreateClient();
-        var fetched = await anon.GetAsync(location);
+        var fetched = await authed.GetAsync(location);
         fetched.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var json = await fetched.Content.ReadAsStringAsync();
@@ -85,15 +97,15 @@ public class DetectionsCrudTests
         var authed = await _factory.CreateAuthenticatedClientAsync();
         var resp = await authed.PostAsJsonAsync("/api/detections", new
         {
-            frameId = 0,                 // must be > 0
+            frameId = 0,
             timestamp = DateTimeOffset.UtcNow,
             severity = "warning",
-            predictions = Array.Empty<object>(),  // empty rejected
-            boundingBox = new { x = 2.0, y = 0.5, width = 0.5, height = 0.5, depthMeters = 0.5, affectedAreaPercent = 10.0 }, // x out of [0,1]
+            predictions = Array.Empty<object>(),
+            boundingBox = new { x = 2.0, y = 0.5, width = 0.5, height = 0.5, depthMeters = 0.5, affectedAreaPercent = 10.0 },
             inferenceMs = 10,
             confidenceGatePassed = true,
-            row = 0,                     // must be > 0
-            plantId = "",                // required
+            row = 0,
+            plantId = "",
             positionMeters = 5.0,
         });
         resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -113,8 +125,7 @@ public class DetectionsCrudTests
             $"/api/detections/{id}", DetectionTestData.BuildUpdateBody(id));
         updateResp.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        var anon = _factory.CreateClient();
-        var fetched = await anon.GetAsync($"/api/detections/{id}");
+        var fetched = await authed.GetAsync($"/api/detections/{id}");
         var json = await fetched.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(json);
         doc.RootElement.GetProperty("severity").GetString().Should().Be("critical");
@@ -169,8 +180,7 @@ public class DetectionsCrudTests
         var deleteResp = await authed.DeleteAsync($"/api/detections/{id}");
         deleteResp.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        var anon = _factory.CreateClient();
-        var fetchAfter = await anon.GetAsync($"/api/detections/{id}");
+        var fetchAfter = await authed.GetAsync($"/api/detections/{id}");
         fetchAfter.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 

@@ -6,19 +6,21 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AgriCure.Api.Controllers;
 
+[Authorize]
 [Route("api/detections")]
 public sealed class DetectionsController(
     IMediator mediator,
     ILogger<DetectionsController> logger) : AppControllerBase(logger)
 {
-    /// <summary>List recent detections, newest first.</summary>
+    /// <summary>List recent detections, newest first. Requires authentication.</summary>
     /// <param name="limit">Number of detections to return (1–200, default 20).</param>
     /// <response code="200">Detections array, newest first. Empty array if none.</response>
     /// <response code="400">Validation error — `limit` must be greater than zero.</response>
+    /// <response code="401">Caller is not authenticated.</response>
     [HttpGet]
-    [AllowAnonymous]
     [ProducesResponseType(typeof(IReadOnlyList<DetectionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public Task<IActionResult> GetAll(
         [FromQuery] int limit = 20,
@@ -26,12 +28,13 @@ public sealed class DetectionsController(
         ExecuteAsync(async () =>
             Ok(await mediator.Send(new GetDetectionsQuery(limit), cancellationToken)));
 
-    /// <summary>Fetch a single detection by id.</summary>
+    /// <summary>Fetch a single detection by id. Requires authentication.</summary>
     /// <response code="200">Detection found.</response>
+    /// <response code="401">Caller is not authenticated.</response>
     /// <response code="404">No detection with that id.</response>
     [HttpGet("{id:guid}", Name = nameof(GetById))]
-    [AllowAnonymous]
     [ProducesResponseType(typeof(DetectionDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public Task<IActionResult> GetById(
