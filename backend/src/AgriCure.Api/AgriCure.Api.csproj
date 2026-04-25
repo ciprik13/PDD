@@ -4,7 +4,7 @@
     <RootNamespace>AgriCure.Api</RootNamespace>
     <AssemblyName>AgriCure.Api</AssemblyName>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <NoWarn>$(NoWarn);CS1591;CS1573</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
