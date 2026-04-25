@@ -12,6 +12,7 @@
     <PackageReference Include="AspNetCore.HealthChecks.Hangfire" />
     <PackageReference Include="Hangfire.AspNetCore" />
     <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Swashbuckle.AspNetCore" />
     <PackageReference Include="Serilog.Sinks.Console" />
     <PackageReference Include="Serilog.Sinks.File" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
