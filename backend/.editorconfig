@@ -36,3 +36,7 @@ csharp_style_var_elsewhere = true:silent
 
 # File-scoped namespaces
 csharp_style_namespace_declarations = file_scoped:warning
+
+# CA1848: "Use LoggerMessage delegates" — overkill for non-hot-path logging.
+# We accept the tiny boxing overhead in exchange for readable ILogger calls.
+dotnet_diagnostic.CA1848.severity = none

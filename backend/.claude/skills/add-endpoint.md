@@ -86,27 +86,37 @@ Run it. It fails. Good.
 ### 5. Controller
 `src/AgriCure.Api/Controllers/TreatmentsController.cs`:
 
+> **Hard rule:** every controller MUST inherit from `AppControllerBase` (not `ControllerBase` directly), and every action body MUST run through `ExecuteAsync(...)` so the per-method try/catch + structured logging is applied uniformly. See `feedback_controllers_base_class` memory.
+
 ```csharp
-[ApiController]
 [Route("api/treatments")]
-public sealed class TreatmentsController(IMediator mediator) : ControllerBase
+public sealed class TreatmentsController(
+    IMediator mediator,
+    ILogger<TreatmentsController> logger) : AppControllerBase(logger)
 {
     /// <summary>List treatments for a disease class, ranked by recommendation order.</summary>
     /// <param name="diseaseClass">Lower-snake-case disease class, e.g. <c>late_blight</c>.</param>
     /// <response code="200">Ordered list of treatments. Empty array if no matches.</response>
     /// <response code="400">Validation error.</response>
+    /// <response code="500">Unhandled error. ProblemDetails comes from AppControllerBase.</response>
     [HttpGet]
     [ProducesResponseType(typeof(TreatmentDto[]), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<IReadOnlyList<TreatmentDto>>> GetTreatments(
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
+    public Task<IActionResult> GetTreatments(
         [FromQuery] string diseaseClass,
-        CancellationToken ct)
+        CancellationToken ct) => ExecuteAsync(async () =>
     {
         var result = await mediator.Send(new GetTreatmentsQuery(diseaseClass), ct);
         return Ok(result);
-    }
+    });
 }
 ```
+
+Notes:
+- `[ApiController]` is inherited from `AppControllerBase` — don't repeat it.
+- Don't add try/catch inline in the action body. `ExecuteAsync` already handles it.
+- The action signature returns `Task<IActionResult>` (not `Task<ActionResult<T>>`) because `ExecuteAsync` returns `Task<IActionResult>`. Swagger still gets the strongly-typed shape via `[ProducesResponseType(typeof(TreatmentDto[]), ...)]`.
 
 ### 6. Make the test green, refactor, repeat.
 
@@ -119,6 +129,8 @@ public sealed class TreatmentsController(IMediator mediator) : ControllerBase
 - [ ] DTO field names match `frontend/src/services/api.ts` if the type already exists there.
 - [ ] Query/Command + validator + handler each in their own file.
 - [ ] Integration test was written before the controller, watched fail, then green.
-- [ ] Controller action has XML docs and `[ProducesResponseType]` for every status code returned.
+- [ ] Controller derives from `AppControllerBase` (never raw `ControllerBase`/`Controller`).
+- [ ] Every action body is wrapped via `ExecuteAsync(...)` — no inline try/catch.
+- [ ] Controller action has XML docs and `[ProducesResponseType]` for every status code returned (including the 500 from `ExecuteAsync`).
 - [ ] If response shape changed and is consumed by the frontend: noted in the PR description.
 - [ ] `dotnet build` clean, `dotnet test` green.
