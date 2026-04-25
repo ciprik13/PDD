@@ -1,9 +1,24 @@
+using System.Globalization;
 using AgriCure.Infrastructure;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Host.UseSerilog((ctx, services, cfg) => cfg
+    .ReadFrom.Configuration(ctx.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext()
+    .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture)
+    .WriteTo.File(
+        "logs/agricure-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 14,
+        shared: true,
+        formatProvider: CultureInfo.InvariantCulture));
+
+builder.Services.AddControllers();
 builder.Services.AddInfrastructure();
 
 builder.Services.AddHealthChecks()
@@ -18,11 +33,14 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+app.UseSerilogRequestLogging();
+
 if (app.Environment.IsDevelopment())
 {
     await app.Services.ApplyMigrationsAsync();
 }
 
+app.MapControllers();
 app.MapGet("/", () => "AgriCure API up");
 
 app.MapHealthChecks("/health", new HealthCheckOptions
