@@ -16,6 +16,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<Detection> Detections => Set<Detection>();
 
+    public DbSet<ClassPrediction> Predictions => Set<ClassPrediction>();
+
     public DbSet<Plant> Plants => Set<Plant>();
 
     protected override void OnModelCreating(ModelBuilder builder)

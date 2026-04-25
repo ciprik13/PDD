@@ -10,6 +10,8 @@ public interface IApplicationDbContext
 
     DbSet<Detection> Detections { get; }
 
+    DbSet<ClassPrediction> Predictions { get; }
+
     DbSet<Plant> Plants { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);

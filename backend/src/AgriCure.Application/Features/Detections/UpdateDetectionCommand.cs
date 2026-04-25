@@ -56,7 +56,9 @@ internal sealed class UpdateDetectionCommandHandler(
 {
     public async Task<Unit> Handle(UpdateDetectionCommand request, CancellationToken cancellationToken)
     {
+        // Load detection without auto-including predictions — we'll replace them via direct delete + insert.
         var detection = await db.Detections
+            .IgnoreAutoIncludes()
             .FirstOrDefaultAsync(d => d.Id == request.Id, cancellationToken)
             ?? throw new NotFoundException($"Detection '{request.Id}' was not found.");
 
@@ -86,11 +88,15 @@ internal sealed class UpdateDetectionCommandHandler(
         detection.PlantId = request.PlantId;
         detection.PositionMeters = request.PositionMeters;
 
-        detection.Predictions.Clear();
+        // Replace predictions: hard-delete the old set, insert the new one.
+        await db.Predictions
+            .Where(p => p.DetectionId == request.Id)
+            .ExecuteDeleteAsync(cancellationToken);
+
         var rank = 0;
         foreach (var p in request.Predictions)
         {
-            detection.Predictions.Add(new ClassPrediction
+            db.Predictions.Add(new ClassPrediction
             {
                 Id = Guid.NewGuid(),
                 DetectionId = detection.Id,
