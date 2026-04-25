@@ -18,6 +18,8 @@ public static class DependencyInjection
 
         services.AddValidatorsFromAssembly(assembly);
 
+        services.AddScoped<Features.Auth.AuthTokenIssuer>();
+
         return services;
     }
 }
