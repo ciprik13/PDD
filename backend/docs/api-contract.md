@@ -126,33 +126,74 @@ The DTO mirrors `Detection` in `frontend/src/services/api.ts`:
 
 ## Error format — RFC 7807 ProblemDetails
 
-Errors follow [RFC 7807](https://datatracker.ietf.org/doc/html/rfc7807):
+Every error response is RFC 7807 ProblemDetails JSON. Field error keys are **camelCase** to match the rest of the JSON.
 
+### Validation (HTTP 400)
 ```json
 {
-  "type": "https://httpstatuses.com/404",
-  "title": "Not Found",
-  "status": 404,
-  "detail": "Detection 'det-999' was not found.",
-  "instance": "/api/detections/det-999",
-  "traceId": "00-..."
-}
-```
-
-Validation errors (HTTP 400) include a per-field `errors` map:
-
-```json
-{
-  "type": "https://httpstatuses.com/400",
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
   "title": "One or more validation errors occurred.",
   "status": 400,
   "errors": {
     "email": ["'Email' is not a valid email address."],
-    "password": ["'Password' must be at least 8 characters."]
+    "password": [
+      "The length of 'Password' must be at least 8 characters. You entered 5 characters.",
+      "Password must contain an uppercase letter."
+    ]
   },
   "traceId": "00-..."
 }
 ```
+
+Identity errors (e.g. duplicate email on register) are mapped to the right field by ASP.NET Identity's error code:
+- `DuplicateEmail` / `DuplicateUserName` / `InvalidEmail` → `email`
+- Anything starting with `Password` → `password`
+- Anything else → empty key (general form-level error)
+
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "One or more validation errors occurred.",
+  "status": 400,
+  "errors": {
+    "email": [
+      "Username 'taken@example.com' is already taken.",
+      "Email 'taken@example.com' is already taken."
+    ]
+  },
+  "traceId": "00-..."
+}
+```
+
+### Authentication failure (HTTP 401)
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
+  "title": "Authentication failed.",
+  "status": 401,
+  "detail": "Invalid email or password.",
+  "traceId": "00-..."
+}
+```
+
+For missing-token cases, the body may be empty (default JWT bearer behavior). Frontends should always treat HTTP 401 as "needs login", regardless of body shape.
+
+### Not found (HTTP 404)
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
+  "title": "Not found.",
+  "status": 404,
+  "detail": "Detection '53c7221a-22d7-416c-b6cb-8780f10ed57e' was not found.",
+  "traceId": "00-..."
+}
+```
+
+### Frontend handling pattern
+- HTTP **400**: read `errors` map, render each field's first message under the matching input. Show entries under the empty key (`""`) as a form-level banner.
+- HTTP **401**: redirect to login (or show "session expired" if you had a token).
+- HTTP **404**: navigate or show a not-found message; `detail` is safe to display.
+- HTTP **5xx**: show a generic "something went wrong" toast; log the `traceId` to your error tracker so it can be cross-referenced with backend logs.
 
 ## Pagination
 

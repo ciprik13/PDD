@@ -20,7 +20,7 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager) 
         {
             return new IdentityOperationResult(
                 UserId: null,
-                Errors: createResult.Errors.Select(e => e.Description).ToArray());
+                Errors: createResult.Errors.Select(ToInfo).ToArray());
         }
 
         var roleResult = await userManager.AddToRoleAsync(user, ApplicationRole.User);
@@ -28,10 +28,10 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager) 
         {
             return new IdentityOperationResult(
                 UserId: null,
-                Errors: roleResult.Errors.Select(e => e.Description).ToArray());
+                Errors: roleResult.Errors.Select(ToInfo).ToArray());
         }
 
-        return new IdentityOperationResult(user.Id, Array.Empty<string>());
+        return new IdentityOperationResult(user.Id, Array.Empty<IdentityErrorInfo>());
     }
 
     public async Task<IdentityUserContext?> AuthenticateAsync(
@@ -58,4 +58,7 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager) 
         var roles = (await userManager.GetRolesAsync(user)).ToArray();
         return new IdentityUserContext(user.Id, user.Email ?? string.Empty, roles);
     }
+
+    private static IdentityErrorInfo ToInfo(IdentityError error) =>
+        new(error.Code, error.Description);
 }

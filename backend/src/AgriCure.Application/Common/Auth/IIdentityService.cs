@@ -12,7 +12,9 @@ public interface IIdentityService
         Guid userId, CancellationToken cancellationToken);
 }
 
-public sealed record IdentityOperationResult(Guid? UserId, IReadOnlyList<string> Errors)
+public sealed record IdentityErrorInfo(string Code, string Description);
+
+public sealed record IdentityOperationResult(Guid? UserId, IReadOnlyList<IdentityErrorInfo> Errors)
 {
     public bool Succeeded => UserId is not null && Errors.Count == 0;
 }

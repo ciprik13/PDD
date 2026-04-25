@@ -26,6 +26,8 @@ builder.Host.UseSerilog((ctx, services, cfg) => cfg
         shared: true,
         formatProvider: CultureInfo.InvariantCulture));
 
+builder.Services.AddProblemDetails();
+
 builder.Services.AddControllers()
     .AddJsonOptions(opts =>
     {

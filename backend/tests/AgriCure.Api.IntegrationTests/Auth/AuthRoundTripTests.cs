@@ -108,7 +108,8 @@ public class AuthRoundTripTests
 
         var problem = await secondResp.Content.ReadFromJsonAsync<ValidationProblem>();
         problem.Should().NotBeNull();
-        problem!.Errors.Should().ContainKey("Password");
+        problem!.Errors.Should().ContainKey("email");
+        problem.Errors["email"].Should().Contain(msg => msg.Contains("already taken", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]

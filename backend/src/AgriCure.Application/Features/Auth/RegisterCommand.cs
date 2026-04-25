@@ -39,7 +39,7 @@ internal sealed class RegisterCommandHandler(
         if (!registration.Succeeded)
         {
             var failures = registration.Errors
-                .Select(message => new ValidationFailure(nameof(RegisterCommand.Password), message))
+                .Select(error => new ValidationFailure(MapErrorField(error.Code), error.Description))
                 .ToArray();
             throw new ValidationException(failures);
         }
@@ -51,4 +51,17 @@ internal sealed class RegisterCommandHandler(
 
         return await tokenIssuer.IssueAsync(userContext, cancellationToken);
     }
+
+    /// <summary>
+    /// Maps ASP.NET Identity error codes to the form field they belong to,
+    /// so the frontend can render the message under the right input.
+    /// </summary>
+    private static string MapErrorField(string code) => code switch
+    {
+        "DuplicateUserName" or "DuplicateEmail" or "InvalidUserName" or "InvalidEmail" =>
+            nameof(RegisterCommand.Email),
+        var c when c.StartsWith("Password", StringComparison.Ordinal) =>
+            nameof(RegisterCommand.Password),
+        _ => string.Empty,
+    };
 }
