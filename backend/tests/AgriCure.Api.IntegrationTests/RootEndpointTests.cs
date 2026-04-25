@@ -1,13 +1,12 @@
 using System.Net;
-using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace AgriCure.Api.IntegrationTests;
 
-public class RootEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public class RootEndpointTests : IClassFixture<IntegrationTestWebAppFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly IntegrationTestWebAppFactory _factory;
 
-    public RootEndpointTests(WebApplicationFactory<Program> factory)
+    public RootEndpointTests(IntegrationTestWebAppFactory factory)
     {
         _factory = factory;
     }
