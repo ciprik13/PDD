@@ -7,7 +7,7 @@ FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION} AS build
 WORKDIR /src
 
 # Solution-level config first so package restore can be cached.
-COPY global.json Directory.Build.props Directory.Packages.props nuget.config ./
+COPY global.json Directory.Build.props Directory.Packages.props nuget.config .editorconfig ./
 
 # Copy only csprojs to maximize layer caching for restore.
 COPY src/AgriCure.Api/AgriCure.Api.csproj src/AgriCure.Api/
