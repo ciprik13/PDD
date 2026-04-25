@@ -324,7 +324,9 @@ Show the user a generic toast and capture `traceId` to your error tracker — ba
 |---|---|---|---|
 | `/health` | `GET` | none | Liveness — 200 if the API process is up. |
 | `/health/ready` | `GET` | none | Readiness — 200 only if Postgres + Hangfire storage are reachable. |
-| `/swagger` | `GET` | none | Interactive Swagger UI. |
+| `/swagger` | `GET` | none in Development; admin role otherwise | Interactive Swagger UI. |
 | `/hangfire` | `GET` | admin role | Background job dashboard. |
+
+> Outside Development, both `/swagger` and `/hangfire` require an admin JWT bearer token. Browsers don't attach the header automatically — admins inspecting prod typically use a browser extension (e.g. ModHeader) or hit the spec at `/swagger/v1/swagger.json` from a tool that can send `Authorization: Bearer <token>`.
 
 The frontend usually doesn't call these — they're for orchestrators and operators.
