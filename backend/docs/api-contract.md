@@ -1,110 +1,168 @@
-# AgriCure API — Conventions
+# AgriCure API Reference
 
-This is a **conventions** document, not a per-endpoint reference. The full per-endpoint contract lives in **Swagger** at `/swagger` (or `/swagger/v1/swagger.json` if you want to regenerate types).
+This is the contract for frontend developers. The full interactive spec lives at **`/swagger`** — this doc is the human-readable companion.
 
-> Frontend devs: if you have the API running locally, the easiest way to learn the contract is to open `http://localhost:8080/swagger`, click "Authorize", paste a JWT, and exercise the endpoints.
+> **Local**: `http://localhost:8080`
+> **Prod**: set `VITE_API_BASE_URL` accordingly. All paths below are relative to that base URL.
 
-## Base URL
-
-| Environment | Base URL |
-|---|---|
-| Local dev | `http://localhost:8080` |
-| Production | TBD (set in `VITE_API_BASE_URL` on the frontend) |
-
-All endpoints live under `/api/...`.
+---
 
 ## Authentication
 
-JSON Web Tokens (JWT) issued by `AuthController`. Two-token flow:
+Endpoints under `/api/auth/*` are public. **Everything else requires a JWT bearer token.**
 
-- **Access token** — short-lived (15 minutes by default). Sent via `Authorization: Bearer <token>` on every protected call.
-- **Refresh token** — long-lived (7 days by default), rotates on use. Stored server-side so we can revoke.
+### Register or log in
 
-All four endpoints accept JSON request bodies and return JSON.
+| Route | Method | Auth |
+|---|---|---|
+| `/api/auth/register` | `POST` | none |
+| `/api/auth/login` | `POST` | none |
 
-```bash
-# Register — creates a user with the `user` role.
-curl -X POST http://localhost:8080/api/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"email":"dev@agricure.test","password":"P@ssw0rd!ABC"}'
+Both accept the same request body and return the same response shape.
 
-# Login — same shape.
-curl -X POST http://localhost:8080/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"dev@agricure.test","password":"P@ssw0rd!ABC"}'
-# -> {
-#      "accessToken": "...",
-#      "accessTokenExpiresAt": "2026-04-25T14:47:09.000Z",
-#      "refreshToken": "...",
-#      "refreshTokenExpiresAt": "2026-05-02T14:32:09.000Z"
-#    }
-
-# Use access token on a protected call.
-curl http://localhost:8080/api/detections \
-  -H "Authorization: Bearer <accessToken>"
-
-# Refresh — old refresh token is revoked, new pair issued.
-curl -X POST http://localhost:8080/api/auth/refresh \
-  -H "Content-Type: application/json" \
-  -d '{"refreshToken":"..."}'
-
-# Logout — idempotent; revokes the refresh token.
-curl -X POST http://localhost:8080/api/auth/logout \
-  -H "Content-Type: application/json" \
-  -d '{"refreshToken":"..."}'
-```
-
-The Hangfire dashboard at `/hangfire` requires the **admin** role; seed the admin user via `Admin:Email` / `Admin:Password` env vars.
-
-## Detections (`/api/detections`)
-
-Plant-disease detection events emitted by edge devices (Jetson + YOLOv8). **All actions require a JWT bearer token** (reads included).
-
-```bash
-# List newest first (limit 1–200, default 20).
-curl http://localhost:8080/api/detections?limit=50 \
-  -H "Authorization: Bearer <accessToken>"
-
-# Single detection.
-curl http://localhost:8080/api/detections/<id> \
-  -H "Authorization: Bearer <accessToken>"
-
-# Ingest a new detection (edge device).
-curl -X POST http://localhost:8080/api/detections \
-  -H "Authorization: Bearer <accessToken>" \
-  -H "Content-Type: application/json" \
-  -d @detection.json   # body shape below
-
-# Replace a detection.
-curl -X PUT http://localhost:8080/api/detections/<id> \
-  -H "Authorization: Bearer <accessToken>" \
-  -H "Content-Type: application/json" \
-  -d @detection.json   # must include "id" matching the route
-
-# Delete (idempotent — 204 even if id is missing).
-curl -X DELETE http://localhost:8080/api/detections/<id> \
-  -H "Authorization: Bearer <accessToken>"
-```
-
-`POST` returns **201 Created** with a `Location` header pointing to the new resource and a body `{ "id": "<guid>" }`. Auto-creates the referenced `plantId` if it does not exist.
-
-The DTO mirrors `Detection` in `frontend/src/services/api.ts`:
-
-```jsonc
+**Request**
+```json
 {
-  "id": "<guid>",
+  "email": "user@example.com",
+  "password": "P@ssw0rd!ABC"
+}
+```
+
+Password rules: minimum 8 characters, must contain an uppercase letter, a lowercase letter, and a digit.
+
+**Response 200** — `AuthResultDto`
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIs...",
+  "accessTokenExpiresAt": "2026-04-25T17:15:04.000Z",
+  "refreshToken": "USCZN0LqLgymgpORLdIYf+...",
+  "refreshTokenExpiresAt": "2026-05-02T17:00:04.000Z"
+}
+```
+
+### Use the access token
+
+Send the access token on every protected request:
+
+```http
+GET /api/detections HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIs...
+```
+
+In Swagger UI: click **Authorize**, paste the token (no `Bearer ` prefix). All "Try it out" calls then carry the header automatically.
+
+### Refresh the access token
+
+Access tokens expire after **15 minutes**. Refresh tokens are valid for **7 days** and rotate on every use — using a refresh token revokes it and issues a new one.
+
+| Route | Method | Auth |
+|---|---|---|
+| `/api/auth/refresh` | `POST` | none (uses the refresh token in the body) |
+
+**Request**
+```json
+{ "refreshToken": "<refreshToken from earlier>" }
+```
+
+**Response 200** — same `AuthResultDto` as login.
+**Response 401** — refresh token unknown, expired, or already revoked.
+
+### Sign out
+
+| Route | Method | Auth |
+|---|---|---|
+| `/api/auth/logout` | `POST` | none |
+
+**Request**
+```json
+{ "refreshToken": "<refreshToken>" }
+```
+
+**Response 204**. Idempotent — already-revoked tokens still get 204.
+
+---
+
+## Detections — `/api/detections`
+
+Plant-disease detection events emitted by edge devices (Jetson + YOLOv8). **All actions require a bearer token.**
+
+### List recent detections
+
+| Route | Method | Auth |
+|---|---|---|
+| `/api/detections?limit=20` | `GET` | bearer |
+
+`limit` is 1–200 (default 20). Newest first.
+
+**Response 200** — array of `Detection`:
+```json
+[
+  {
+    "id": "7145896d-8546-49a4-baf7-4adf02fdd1bf",
+    "frameId": 4821,
+    "timestamp": "2026-04-25T17:28:17.803Z",
+    "severity": "warning",
+    "topPrediction": {
+      "diseaseClass": "early_blight",
+      "confidence": 0.876,
+      "label": "Early Blight (A. solani)"
+    },
+    "allPredictions": [
+      { "diseaseClass": "early_blight", "confidence": 0.876, "label": "Early Blight" },
+      { "diseaseClass": "healthy", "confidence": 0.04, "label": "Healthy" }
+    ],
+    "boundingBox": {
+      "x": 0.35,
+      "y": 0.40,
+      "width": 0.18,
+      "height": 0.22,
+      "depthMeters": 0.9,
+      "affectedAreaPercent": 11.0
+    },
+    "inferenceMs": 35,
+    "confidenceGatePassed": true,
+    "row": 7,
+    "plantId": "P023",
+    "positionMeters": 12.4
+  }
+]
+```
+
+### Get a single detection
+
+| Route | Method | Auth |
+|---|---|---|
+| `/api/detections/{id}` | `GET` | bearer |
+
+`{id}` is a GUID (e.g. `7145896d-8546-49a4-baf7-4adf02fdd1bf`).
+
+**Response 200** — single `Detection` (same shape as a list element).
+**Response 404** — no detection with that id.
+
+### Create a detection
+
+| Route | Method | Auth |
+|---|---|---|
+| `/api/detections` | `POST` | bearer |
+
+**Request** — `Detection` minus `id` (server-generated). Predictions should be ordered by confidence desc; the server preserves that order and exposes the first one as `topPrediction` on read.
+
+```json
+{
   "frameId": 4821,
-  "timestamp": "2026-04-25T14:32:09.123Z",
-  "severity": "warning",                  // "critical" | "warning" | "healthy"
-  "topPrediction": {
-    "diseaseClass": "early_blight",       // see DiseaseClass enum below
-    "confidence": 0.876,
-    "label": "Early Blight (A. solani)"
-  },
-  "allPredictions": [ /* same shape, ranked desc by confidence */ ],
+  "timestamp": "2026-04-25T17:28:17.803Z",
+  "severity": "warning",
+  "predictions": [
+    { "diseaseClass": "early_blight", "confidence": 0.876, "label": "Early Blight" },
+    { "diseaseClass": "healthy", "confidence": 0.04, "label": "Healthy" }
+  ],
   "boundingBox": {
-    "x": 0.35, "y": 0.4, "width": 0.18, "height": 0.22,
-    "depthMeters": 0.9, "affectedAreaPercent": 11
+    "x": 0.35,
+    "y": 0.40,
+    "width": 0.18,
+    "height": 0.22,
+    "depthMeters": 0.9,
+    "affectedAreaPercent": 11.0
   },
   "inferenceMs": 35,
   "confidenceGatePassed": true,
@@ -114,58 +172,102 @@ The DTO mirrors `Detection` in `frontend/src/services/api.ts`:
 }
 ```
 
-`DiseaseClass` values: `late_blight`, `early_blight`, `fusarium_wilt`, `powdery_mildew`, `bacterial_spot`, `leaf_mold`, `septoria_leaf_spot`, `spider_mites`, `healthy`. Enums are serialized as snake_case_lower strings (matches the frontend TS unions exactly).
+**Response 201** — `{ "id": "<guid>" }` and `Location: /api/detections/<guid>`.
 
-## JSON conventions
+If the referenced `plantId` doesn't exist, it's auto-created.
 
-- All responses are JSON with `application/json; charset=utf-8`.
-- Property casing: **camelCase** (`detectionsToday`, `topPrediction`, etc.) — matches the frontend's TypeScript types.
-- Dates: ISO 8601 with timezone, e.g. `"2026-04-25T14:32:09.123Z"`.
-- IDs: GUIDs as strings.
-- Enums: lowercase snake_case strings (`"late_blight"`, `"early_blight"`, `"healthy"`).
+### Replace a detection
 
-## Error format — RFC 7807 ProblemDetails
+| Route | Method | Auth |
+|---|---|---|
+| `/api/detections/{id}` | `PUT` | bearer |
 
-Every error response is RFC 7807 ProblemDetails JSON. Field error keys are **camelCase** to match the rest of the JSON.
+PUT semantics — full replacement, not patch. The body must include `id` matching the route.
 
-### Validation (HTTP 400)
+```json
+{
+  "id": "7145896d-8546-49a4-baf7-4adf02fdd1bf",
+  "frameId": 4900,
+  "timestamp": "2026-04-25T18:00:00Z",
+  "severity": "critical",
+  "predictions": [...],
+  "boundingBox": {...},
+  "inferenceMs": 30,
+  "confidenceGatePassed": true,
+  "row": 7,
+  "plantId": "P023",
+  "positionMeters": 12.4
+}
+```
+
+**Response 204** on success.
+**Response 400** if route id and body id don't match.
+**Response 404** if no detection with that id.
+
+### Delete a detection
+
+| Route | Method | Auth |
+|---|---|---|
+| `/api/detections/{id}` | `DELETE` | bearer |
+
+**Response 204** — idempotent. Missing ids still return 204.
+
+---
+
+## Conventions
+
+### IDs
+
+- Most entity IDs are **GUIDs** (lowercase strings): `"7145896d-8546-49a4-baf7-4adf02fdd1bf"`.
+- `plantId` is a **short string code**, max 64 characters: `"P023"`.
+
+### JSON
+
+- All field names are **camelCase**.
+- All enum values are **snake_case_lower** strings.
+- Timestamps are **ISO 8601 with timezone**: `"2026-04-25T14:32:09.123Z"`.
+
+### Enums
+
+**`severity`**
+`critical` · `warning` · `healthy`
+
+**`diseaseClass`**
+`late_blight` · `early_blight` · `fusarium_wilt` · `powdery_mildew` · `bacterial_spot` · `leaf_mold` · `septoria_leaf_spot` · `spider_mites` · `healthy`
+
+---
+
+## Errors
+
+Every error is **RFC 7807 ProblemDetails** JSON.
+
+### 400 — Validation
+
 ```json
 {
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
   "title": "One or more validation errors occurred.",
   "status": 400,
   "errors": {
-    "email": ["'Email' is not a valid email address."],
-    "password": [
-      "The length of 'Password' must be at least 8 characters. You entered 5 characters.",
-      "Password must contain an uppercase letter."
-    ]
+    "email": ["Email is not valid."],
+    "password": ["Password must contain a digit."]
   },
   "traceId": "00-..."
 }
 ```
 
-Identity errors (e.g. duplicate email on register) are mapped to the right field by ASP.NET Identity's error code:
-- `DuplicateEmail` / `DuplicateUserName` / `InvalidEmail` → `email`
-- Anything starting with `Password` → `password`
-- Anything else → empty key (general form-level error)
+`errors` is keyed by the **camelCase field name** of the offending input. An empty key (`""`) means a form-level error not tied to one specific field — render it above the form.
 
-```json
-{
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-  "title": "One or more validation errors occurred.",
-  "status": 400,
-  "errors": {
-    "email": [
-      "Username 'taken@example.com' is already taken.",
-      "Email 'taken@example.com' is already taken."
-    ]
-  },
-  "traceId": "00-..."
-}
-```
+Common register-time errors are mapped to fields for you:
 
-### Authentication failure (HTTP 401)
+| What happened | Key | Example message |
+|---|---|---|
+| Duplicate email | `email` | `"An account with this email already exists."` |
+| Invalid email format | `email` | `"Email is not valid."` |
+| Password too weak | `password` | `"Password must contain a digit."` |
+
+### 401 — Authentication failed
+
 ```json
 {
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.2",
@@ -176,70 +278,53 @@ Identity errors (e.g. duplicate email on register) are mapped to the right field
 }
 ```
 
-For missing-token cases, the body may be empty (default JWT bearer behavior). Frontends should always treat HTTP 401 as "needs login", regardless of body shape.
+When the bearer token is missing or expired, the response may be empty — treat any 401 as "needs login".
 
-### Not found (HTTP 404)
+### 404 — Not found
+
 ```json
 {
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.5",
   "title": "Not found.",
   "status": 404,
-  "detail": "Detection '53c7221a-22d7-416c-b6cb-8780f10ed57e' was not found.",
+  "detail": "Detection 'a7e3...' was not found.",
   "traceId": "00-..."
 }
 ```
 
-### Frontend handling pattern
-- HTTP **400**: read `errors` map, render each field's first message under the matching input. Show entries under the empty key (`""`) as a form-level banner.
-- HTTP **401**: redirect to login (or show "session expired" if you had a token).
-- HTTP **404**: navigate or show a not-found message; `detail` is safe to display.
-- HTTP **5xx**: show a generic "something went wrong" toast; log the `traceId` to your error tracker so it can be cross-referenced with backend logs.
+### 5xx — Server error
 
-## Pagination
+```json
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.6.1",
+  "title": "Internal server error.",
+  "status": 500,
+  "detail": "An unexpected error occurred while processing your request.",
+  "traceId": "00-..."
+}
+```
 
-For list endpoints, default and max page sizes are documented per-endpoint in Swagger. Common pattern:
+Show the user a generic toast and capture `traceId` to your error tracker — backend logs use the same id.
 
-- `?limit=20` — max 200, default per endpoint.
-- `?offset=0` — when pagination beyond simple `limit` is needed.
+### Recommended frontend handling
 
-If an endpoint diverges, Swagger is authoritative.
+| Status | Frontend action |
+|---|---|
+| **200 / 201 / 204** | Success path. |
+| **400** | For each `errors[field][0]`, render under the matching input. Empty-key errors → form-level banner. |
+| **401** | Redirect to login (or show "session expired" if a token was set). |
+| **404** | Navigate or show a not-found message. `detail` is safe to display. |
+| **5xx** | Generic toast. Log `traceId` to your error tracker. |
 
-## Versioning
+---
 
-URL-versioned: future breaking changes will land at `/api/v2/...`. The current implicit version is `v1`. Don't include `/v1/` in URLs until v2 ships.
+## Health & operations
 
-## Rate limits
+| Route | Method | Auth | Purpose |
+|---|---|---|---|
+| `/health` | `GET` | none | Liveness — 200 if the API process is up. |
+| `/health/ready` | `GET` | none | Readiness — 200 only if Postgres + Hangfire storage are reachable. |
+| `/swagger` | `GET` | none | Interactive Swagger UI. |
+| `/hangfire` | `GET` | admin role | Background job dashboard. |
 
-Not enforced in PR #1. To be added once we hit production traffic — track via the backlog file `backend/.claude/backlog/` (TBD).
-
-## Health checks
-
-- `GET /health` — liveness. Returns 200 if the process is up.
-- `GET /health/ready` — readiness. Returns 200 only if Postgres (and Hangfire storage) are reachable.
-
-Use `/health/ready` for load-balancer checks.
-
-## Endpoints
-
-The full list lives in **Swagger UI**. Below is a quick index of what's planned across the 6-PR series:
-
-| PR | Endpoint | Purpose |
-|---|---|---|
-| #4 | `POST /api/auth/register` | Create user |
-| #4 | `POST /api/auth/login` | Issue access + refresh tokens |
-| #4 | `POST /api/auth/refresh` | Rotate refresh token |
-| #4 | `POST /api/auth/logout` | Revoke refresh token |
-| #5 | `GET /api/detections?limit=` | List recent detections |
-| #5 | `GET /api/detections/{id}` | Single detection |
-| #5 | `POST /api/detections` | Ingest a detection (edge devices) |
-| #5 | `PUT /api/detections/{id}` | Update detection |
-| #5 | `DELETE /api/detections/{id}` | Remove detection |
-| #6 | `GET /api/system/status` | Device + model + sync info |
-| #6 | `GET /api/dashboard/stats` | Aggregate dashboard tiles |
-| #6 | `GET /api/camera/frame` | Latest camera frame metadata |
-| #6 | `GET /api/stand/position` | Current stand GPS + row |
-| #6 | `GET /api/passports/{plantId}` | Plant passport (event log) |
-| #6 | `GET /api/treatments?diseaseClass=` | Treatment recommendations |
-| #6 | `GET /api/environment/latest` | Latest environment reading |
-
-This table is updated only when we add/remove an endpoint. The shape of each endpoint is documented in Swagger and in the controller XML docs — not duplicated here.
+The frontend usually doesn't call these — they're for orchestrators and operators.
