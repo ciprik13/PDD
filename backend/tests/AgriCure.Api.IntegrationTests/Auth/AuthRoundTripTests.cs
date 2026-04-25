@@ -109,7 +109,8 @@ public class AuthRoundTripTests
         var problem = await secondResp.Content.ReadFromJsonAsync<ValidationProblem>();
         problem.Should().NotBeNull();
         problem!.Errors.Should().ContainKey("email");
-        problem.Errors["email"].Should().Contain(msg => msg.Contains("already taken", StringComparison.OrdinalIgnoreCase));
+        problem.Errors["email"].Should().HaveCount(1, "DuplicateUserName + DuplicateEmail collapse to one message");
+        problem.Errors["email"][0].Should().Be("An account with this email already exists.");
     }
 
     [Fact]

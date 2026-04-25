@@ -38,10 +38,7 @@ internal sealed class RegisterCommandHandler(
 
         if (!registration.Succeeded)
         {
-            var failures = registration.Errors
-                .Select(error => new ValidationFailure(MapErrorField(error.Code), error.Description))
-                .ToArray();
-            throw new ValidationException(failures);
+            throw new ValidationException(MapIdentityErrors(registration.Errors));
         }
 
         var userContext = await identity.GetUserContextAsync(
@@ -53,15 +50,38 @@ internal sealed class RegisterCommandHandler(
     }
 
     /// <summary>
-    /// Maps ASP.NET Identity error codes to the form field they belong to,
-    /// so the frontend can render the message under the right input.
+    /// Translates ASP.NET Identity errors into FluentValidation failures with friendly,
+    /// PII-free messages. Codes that overlap (e.g. <c>DuplicateUserName</c> and
+    /// <c>DuplicateEmail</c>, since we use email-as-username) are collapsed to a single failure.
     /// </summary>
-    private static string MapErrorField(string code) => code switch
+    private static ValidationFailure[] MapIdentityErrors(IReadOnlyList<IdentityErrorInfo> errors)
     {
-        "DuplicateUserName" or "DuplicateEmail" or "InvalidUserName" or "InvalidEmail" =>
-            nameof(RegisterCommand.Email),
-        var c when c.StartsWith("Password", StringComparison.Ordinal) =>
-            nameof(RegisterCommand.Password),
-        _ => string.Empty,
-    };
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var failures = new List<ValidationFailure>();
+
+        foreach (var error in errors)
+        {
+            var mapped = TranslateError(error);
+            var dedupKey = $"{mapped.Field}|{mapped.GroupKey}";
+            if (seen.Add(dedupKey))
+            {
+                failures.Add(new ValidationFailure(mapped.Field, mapped.Message));
+            }
+        }
+
+        return failures.ToArray();
+    }
+
+    private static (string Field, string Message, string GroupKey) TranslateError(IdentityErrorInfo error) =>
+        error.Code switch
+        {
+            "DuplicateUserName" or "DuplicateEmail" =>
+                (nameof(RegisterCommand.Email), "An account with this email already exists.", "duplicate-email"),
+            "InvalidUserName" or "InvalidEmail" =>
+                (nameof(RegisterCommand.Email), "Email is not valid.", "invalid-email"),
+            var c when c.StartsWith("Password", StringComparison.Ordinal) =>
+                (nameof(RegisterCommand.Password), error.Description, c),
+            _ =>
+                (string.Empty, error.Description, error.Code),
+        };
 }
