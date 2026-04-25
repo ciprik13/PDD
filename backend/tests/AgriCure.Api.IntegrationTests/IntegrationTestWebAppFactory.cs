@@ -21,6 +21,11 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
             config.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:Default"] = _postgres.GetConnectionString(),
+                ["Jwt:Issuer"] = "agricure-tests",
+                ["Jwt:Audience"] = "agricure-tests",
+                ["Jwt:SigningKey"] = "test-only-signing-key-must-be-long-enough-for-hmacsha256",
+                ["Jwt:AccessTokenMinutes"] = "15",
+                ["Jwt:RefreshTokenDays"] = "7",
             });
         });
     }
