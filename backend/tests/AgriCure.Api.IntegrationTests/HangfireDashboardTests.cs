@@ -13,7 +13,7 @@ public class HangfireDashboardTests
     }
 
     [Fact]
-    public async Task Get_hangfire_dashboard_returns_200_in_development()
+    public async Task Get_hangfire_dashboard_returns_401_when_anonymous()
     {
         var client = _factory.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
         {
@@ -22,6 +22,6 @@ public class HangfireDashboardTests
 
         var response = await client.GetAsync("/hangfire");
 
-        response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.Redirect, HttpStatusCode.MovedPermanently);
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 }

@@ -96,7 +96,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {
-    Authorization = [new DevelopmentOnlyDashboardFilter(app.Environment)],
+    Authorization = [new AdminRoleDashboardFilter()],
 });
 
 RecurringJob.AddOrUpdate<DailyDetectionSummaryJob>(
