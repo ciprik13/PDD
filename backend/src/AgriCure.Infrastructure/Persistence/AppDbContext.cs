@@ -1,16 +1,22 @@
 using AgriCure.Application.Common.Interfaces;
+using AgriCure.Domain.Identity;
+using AgriCure.Infrastructure.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace AgriCure.Infrastructure.Persistence;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options)
-    : DbContext(options), IApplicationDbContext
+    : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>(options), IApplicationDbContext
 {
     public const string DefaultSchema = "app";
 
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+
+    protected override void OnModelCreating(ModelBuilder builder)
     {
-        modelBuilder.HasDefaultSchema(DefaultSchema);
-        base.OnModelCreating(modelBuilder);
+        builder.HasDefaultSchema(DefaultSchema);
+        base.OnModelCreating(builder);
+        builder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
     }
 }
