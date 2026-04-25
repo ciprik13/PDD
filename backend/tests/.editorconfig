@@ -5,3 +5,6 @@ dotnet_diagnostic.CA1707.severity = none
 dotnet_diagnostic.CA1062.severity = none
 # Tests often deliberately use static state, async-void, etc.
 dotnet_diagnostic.CA1812.severity = none
+# xUnit's [CollectionDefinition] expects types named *Collection — clashes with
+# CA1711 (which reserves "Collection" suffix for ICollection types).
+dotnet_diagnostic.CA1711.severity = none
