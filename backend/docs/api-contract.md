@@ -56,6 +56,64 @@ curl -X POST http://localhost:8080/api/auth/logout \
 
 The Hangfire dashboard at `/hangfire` requires the **admin** role; seed the admin user via `Admin:Email` / `Admin:Password` env vars.
 
+## Detections (`/api/detections`)
+
+Plant-disease detection events emitted by edge devices (Jetson + YOLOv8). Reads are anonymous; writes require a JWT bearer token.
+
+```bash
+# List newest first (limit 1–200, default 20).
+curl http://localhost:8080/api/detections?limit=50
+
+# Single detection.
+curl http://localhost:8080/api/detections/<id>
+
+# Ingest a new detection (edge device).
+curl -X POST http://localhost:8080/api/detections \
+  -H "Authorization: Bearer <accessToken>" \
+  -H "Content-Type: application/json" \
+  -d @detection.json   # body shape below
+
+# Replace a detection.
+curl -X PUT http://localhost:8080/api/detections/<id> \
+  -H "Authorization: Bearer <accessToken>" \
+  -H "Content-Type: application/json" \
+  -d @detection.json   # must include "id" matching the route
+
+# Delete (idempotent — 204 even if id is missing).
+curl -X DELETE http://localhost:8080/api/detections/<id> \
+  -H "Authorization: Bearer <accessToken>"
+```
+
+`POST` returns **201 Created** with a `Location` header pointing to the new resource and a body `{ "id": "<guid>" }`. Auto-creates the referenced `plantId` if it does not exist.
+
+The DTO mirrors `Detection` in `frontend/src/services/api.ts`:
+
+```jsonc
+{
+  "id": "<guid>",
+  "frameId": 4821,
+  "timestamp": "2026-04-25T14:32:09.123Z",
+  "severity": "warning",                  // "critical" | "warning" | "healthy"
+  "topPrediction": {
+    "diseaseClass": "early_blight",       // see DiseaseClass enum below
+    "confidence": 0.876,
+    "label": "Early Blight (A. solani)"
+  },
+  "allPredictions": [ /* same shape, ranked desc by confidence */ ],
+  "boundingBox": {
+    "x": 0.35, "y": 0.4, "width": 0.18, "height": 0.22,
+    "depthMeters": 0.9, "affectedAreaPercent": 11
+  },
+  "inferenceMs": 35,
+  "confidenceGatePassed": true,
+  "row": 7,
+  "plantId": "P023",
+  "positionMeters": 12.4
+}
+```
+
+`DiseaseClass` values: `late_blight`, `early_blight`, `fusarium_wilt`, `powdery_mildew`, `bacterial_spot`, `leaf_mold`, `septoria_leaf_spot`, `spider_mites`, `healthy`. Enums are serialized as snake_case_lower strings (matches the frontend TS unions exactly).
+
 ## JSON conventions
 
 - All responses are JSON with `application/json; charset=utf-8`.
