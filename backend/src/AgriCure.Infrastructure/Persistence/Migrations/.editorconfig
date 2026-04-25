@@ -1,0 +1,7 @@
+# EF Core generates migration files with block-scoped namespaces and minimal
+# styling. Don't fight the generator — keep these rules silent in this folder
+# so warnings-as-errors doesn't break the build after `dotnet ef migrations add`.
+
+[*.cs]
+csharp_style_namespace_declarations = block_scoped:silent
+dotnet_diagnostic.IDE0161.severity = none
