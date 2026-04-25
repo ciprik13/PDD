@@ -1,0 +1,142 @@
+# =====================================================================
+# AgriCure / PDD — monorepo .gitignore
+# Covers .NET (backend/), Node (frontend/), JetBrains/VS, OS, secrets.
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# .NET / C#
+# ---------------------------------------------------------------------
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.pidb
+*.svclog
+*.scc
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+
+# Test results / coverage
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.coverage
+*.coveragexml
+coverage/
+coverage.*.json
+coverage.*.xml
+coverage.*.info
+*.opencover.xml
+*.cobertura.xml
+TestResults/
+
+# Roslyn cache
+*.cache
+
+# NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+.nuget/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# Environment-specific config (keep base appsettings.json + Development)
+backend/src/**/appsettings.*.json
+!backend/src/**/appsettings.json
+!backend/src/**/appsettings.Development.json
+
+# EF Core
+*.mdf
+*.ldf
+*.ndf
+
+# ---------------------------------------------------------------------
+# JetBrains Rider / IntelliJ
+# ---------------------------------------------------------------------
+.idea/
+.idea_modules/
+*.iml
+*.ipr
+*.iws
+*.DotSettings.user
+
+# ---------------------------------------------------------------------
+# Visual Studio / VS Code
+# ---------------------------------------------------------------------
+.vs/
+.vscode/
+!.vscode/launch.json.example
+!.vscode/tasks.json.example
+
+# ---------------------------------------------------------------------
+# Node / Vite (frontend/)
+# ---------------------------------------------------------------------
+node_modules/
+dist/
+dist-ssr/
+.vite/
+.parcel-cache/
+.pnp.*
+.yarn/
+.npm/
+*.tsbuildinfo
+.eslintcache
+
+# ---------------------------------------------------------------------
+# Docker / env / secrets
+# ---------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+docker-compose.override.local.yml
+*.pem
+*.key
+*.crt
+*.pfx
+
+# ---------------------------------------------------------------------
+# Claude Code per-developer settings (each dev has their own)
+# ---------------------------------------------------------------------
+**/.claude/settings.json
+**/.claude/settings.local.json
+
+# ---------------------------------------------------------------------
+# OS noise
+# ---------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+$RECYCLE.BIN/
+
+# ---------------------------------------------------------------------
+# Misc
+# ---------------------------------------------------------------------
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+.cache/

@@ -1,0 +1,7 @@
+[*.cs]
+# Tests use Method_under_X_should_Y naming; underscores are intentional.
+dotnet_diagnostic.CA1707.severity = none
+# Test method names don't need to be public consts or follow strict naming.
+dotnet_diagnostic.CA1062.severity = none
+# Tests often deliberately use static state, async-void, etc.
+dotnet_diagnostic.CA1812.severity = none

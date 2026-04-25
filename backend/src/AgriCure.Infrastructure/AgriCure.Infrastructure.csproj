@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>AgriCure.Infrastructure</RootNamespace>
+    <AssemblyName>AgriCure.Infrastructure</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AgriCure.Application\AgriCure.Application.csproj" />
+    <ProjectReference Include="..\AgriCure.Domain\AgriCure.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
