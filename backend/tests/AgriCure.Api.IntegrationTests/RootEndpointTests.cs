@@ -2,7 +2,8 @@ using System.Net;
 
 namespace AgriCure.Api.IntegrationTests;
 
-public class RootEndpointTests : IClassFixture<IntegrationTestWebAppFactory>
+[Collection(IntegrationTestCollection.Name)]
+public class RootEndpointTests
 {
     private readonly IntegrationTestWebAppFactory _factory;
 

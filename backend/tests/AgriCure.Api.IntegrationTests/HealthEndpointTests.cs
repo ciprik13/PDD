@@ -3,7 +3,8 @@ using System.Net.Http.Json;
 
 namespace AgriCure.Api.IntegrationTests;
 
-public class HealthEndpointTests : IClassFixture<IntegrationTestWebAppFactory>
+[Collection(IntegrationTestCollection.Name)]
+public class HealthEndpointTests
 {
     private readonly IntegrationTestWebAppFactory _factory;
 
@@ -27,17 +28,25 @@ public class HealthEndpointTests : IClassFixture<IntegrationTestWebAppFactory>
     }
 
     [Fact]
-    public async Task Get_health_ready_returns_healthy_with_postgres_check()
+    public async Task Get_health_ready_returns_healthy_with_postgres_and_hangfire_checks()
     {
         var client = _factory.CreateClient();
 
-        var response = await client.GetAsync("/health/ready");
+        // Hangfire server registration is async — poll until ready (max ~15s).
+        HealthResponse? body = null;
+        for (var attempt = 0; attempt < 30; attempt++)
+        {
+            var response = await client.GetAsync("/health/ready");
+            response.StatusCode.Should().BeOneOf(HttpStatusCode.OK, HttpStatusCode.ServiceUnavailable);
+            body = await response.Content.ReadFromJsonAsync<HealthResponse>();
+            if (body?.Status == "Healthy") break;
+            await Task.Delay(500);
+        }
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<HealthResponse>();
         body.Should().NotBeNull();
         body!.Status.Should().Be("Healthy");
-        body.Checks.Should().ContainSingle(c => c.Name == "postgres" && c.Status == "Healthy");
+        body.Checks.Should().Contain(c => c.Name == "postgres" && c.Status == "Healthy");
+        body.Checks.Should().Contain(c => c.Name == "hangfire" && c.Status == "Healthy");
     }
 
     private sealed record HealthResponse(string Status, HealthCheck[] Checks);
