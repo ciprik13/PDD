@@ -49,10 +49,10 @@ Migrations run automatically on startup in the `Development` environment.
 |---|---|---|
 | API | 8080 | `/` |
 | Swagger UI | 8080 | `/swagger` *(PR #4)* |
-| Hangfire dashboard | 8080 | `/hangfire` *(PR #3, admin-only PR #4)* |
+| Hangfire dashboard | 8080 | `/hangfire` (dev-only filter; admin-role filter lands in PR #4) |
 | PostgreSQL | 5432 | — |
-| Health (liveness) | 8080 | `/health` |
-| Health (readiness + Postgres ping) | 8080 | `/health/ready` |
+| Health (liveness, "self") | 8080 | `/health` |
+| Health (readiness — Postgres + Hangfire) | 8080 | `/health/ready` |
 
 In production, run with the override skipped so host ports aren't bound:
 
@@ -84,6 +84,17 @@ backend/
 ├── CONTRIBUTING.md               how to add an endpoint end-to-end
 └── README.md                     this file
 ```
+
+## Logs
+
+Serilog writes structured logs to two sinks:
+
+- **Console** — what `docker compose logs api` and `dotnet run` show.
+- **Rolling file** — `logs/agricure-YYYYMMDD.log` next to the api binary (inside the container: `/app/logs/`). Daily rolling, 14 days retained.
+
+Inside Docker the `app` user owns `/app/logs/`; mount a volume there if you need logs persisted across container rebuilds. In production prefer shipping the structured stdout to your log aggregator and skip the file sink — it's there for local debugging convenience.
+
+`/hangfire` shows the recurring `daily-detection-summary` job — currently a placeholder that just logs.
 
 ## Migrations
 
