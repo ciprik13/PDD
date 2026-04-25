@@ -8,19 +8,22 @@ namespace AgriCure.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(
-        this IServiceCollection services,
-        IConfiguration configuration)
-    {
-        var connectionString = configuration.GetConnectionString("Default")
-            ?? throw new InvalidOperationException(
-                "Connection string 'Default' is required.");
+    public const string DefaultConnectionStringName = "Default";
 
-        services.AddDbContext<AppDbContext>(options =>
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services)
+    {
+        services.AddDbContext<AppDbContext>((sp, options) =>
+        {
+            var configuration = sp.GetRequiredService<IConfiguration>();
+            var connectionString = configuration.GetConnectionString(DefaultConnectionStringName)
+                ?? throw new InvalidOperationException(
+                    $"Connection string '{DefaultConnectionStringName}' is required.");
+
             options.UseNpgsql(connectionString, npgsql =>
                 npgsql.MigrationsHistoryTable(
                     "__EFMigrationsHistory",
-                    AppDbContext.DefaultSchema)));
+                    AppDbContext.DefaultSchema));
+        });
 
         services.AddScoped<IApplicationDbContext>(sp =>
             sp.GetRequiredService<AppDbContext>());
