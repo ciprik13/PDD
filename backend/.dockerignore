@@ -1,0 +1,43 @@
+# Build artifacts
+**/bin
+**/obj
+**/out
+**/publish
+
+# IDE / editor
+**/.vs
+**/.vscode
+**/.idea
+**/*.user
+**/*.suo
+**/*.DotSettings*
+
+# Test outputs
+**/TestResults
+**/coverage
+**/*.coverage
+
+# Tests are not built into the runtime image
+tests/
+
+# Local-only Claude state (per-developer settings)
+**/.claude/settings*.json
+
+# Docker artifacts (avoid recursive include)
+Dockerfile
+.dockerignore
+docker-compose*.yml
+.env
+.env.*
+!.env.example
+
+# Docs
+README.md
+CONTRIBUTING.md
+CLAUDE.md
+docs/
+
+# OS / temp
+**/.DS_Store
+**/Thumbs.db
+**/*.log
