@@ -4,37 +4,63 @@
 
 ## Quick start
 
-> Requirements: .NET 9 SDK, Docker (for the local Postgres container in PR #2 and beyond), Git.
+> Requirements: Docker (Compose v2). .NET 9 SDK only needed for running the test suite or `dotnet run` against the dockerized Postgres directly.
 
 ```bash
-# from the repo root
 cd backend
-dotnet build
-dotnet test
-dotnet run --project src/AgriCure.Api
-```
-
-Open <http://localhost:5000/> — should respond with `AgriCure API up`.
-
-Once Docker support lands (PR #2), the workflow becomes:
-
-```bash
 cp .env.example .env
 docker compose up --build
 ```
 
-API will be on <http://localhost:8080> and Swagger on <http://localhost:8080/swagger>.
+Then check:
 
-## Default ports (after PRs #2–#6)
+```bash
+curl http://localhost:8080/health/ready
+# → {"status":"Healthy","checks":[{"name":"postgres","status":"Healthy","description":null}]}
+```
+
+`docker compose down -v` tears the stack down and drops the Postgres volume.
+
+### Running tests
+
+```bash
+cd backend
+dotnet test
+```
+
+The integration tests use [Testcontainers](https://dotnet.testcontainers.org) to spin up an ephemeral Postgres per run, so Docker must be running but no manual setup is needed.
+
+### Running the API outside Docker
+
+The api needs a connection string. Either:
+- Bring up only Postgres (`docker compose up postgres`) and point the api at `localhost:5432` via a `ConnectionStrings__Default` env var, or
+- Set the env var to any reachable Postgres instance.
+
+```powershell
+$env:ConnectionStrings__Default = "Host=localhost;Port=5432;Database=agricure;Username=agricure;Password=change-me"
+dotnet run --project src/AgriCure.Api
+```
+
+Migrations run automatically on startup in the `Development` environment.
+
+## Default ports
 
 | Service | Port | Path |
 |---|---|---|
 | API | 8080 | `/` |
-| Swagger UI | 8080 | `/swagger` |
-| Hangfire dashboard | 8080 | `/hangfire` (admin only) |
+| Swagger UI | 8080 | `/swagger` *(PR #4)* |
+| Hangfire dashboard | 8080 | `/hangfire` *(PR #3, admin-only PR #4)* |
 | PostgreSQL | 5432 | — |
 | Health (liveness) | 8080 | `/health` |
-| Health (readiness, with DB ping) | 8080 | `/health/ready` |
+| Health (readiness + Postgres ping) | 8080 | `/health/ready` |
+
+In production, run with the override skipped so host ports aren't bound:
+
+```bash
+docker compose -f docker-compose.yml up
+```
+
+Then expose the api via your reverse proxy of choice (nginx, Caddy, etc.).
 
 ## Repository layout
 
@@ -49,10 +75,28 @@ backend/
 │   ├── commands/                 /commit, /create-pr, /implement-ticket
 │   ├── skills/                   add-endpoint, add-migration, update-api-docs, tdd-dotnet
 │   └── backlog/                  parked future ideas
+├── .config/dotnet-tools.json     pinned dotnet-ef for migrations
+├── Dockerfile                    multi-stage build for AgriCure.Api
+├── docker-compose.yml            api + postgres (prod-shaped)
+├── docker-compose.override.yml   dev port mappings + ASPNETCORE_ENVIRONMENT=Development
+├── .env.example                  copy to .env and customize
 ├── CLAUDE.md                     project rules — read this before contributing
 ├── CONTRIBUTING.md               how to add an endpoint end-to-end
 └── README.md                     this file
 ```
+
+## Migrations
+
+```bash
+cd backend
+dotnet tool restore                                                       # first time only
+dotnet ef migrations add <Name> \
+  --project src/AgriCure.Infrastructure \
+  --startup-project src/AgriCure.Api \
+  --output-dir Persistence/Migrations
+```
+
+Migrations live in `src/AgriCure.Infrastructure/Persistence/Migrations/` and apply automatically when the api starts in the `Development` environment. In production, run `dotnet ef database update` (or wire a one-shot migrator container) before promoting a build.
 
 ## API documentation
 
@@ -70,9 +114,9 @@ Stacked PRs targeting `develop`:
 
 | PR | Branch | Status |
 |---|---|---|
-| #1 | `backend/01-foundation` | This branch — solution skeleton, .claude/, docs |
-| #2 | `backend/02-docker-database` | Docker, Postgres, EF Core, health checks |
-| #3 | `backend/03-hangfire-serilog` | Background jobs, structured logging |
+| #1 | `backend/01-foundation` | merged |
+| #2 | `backend/02-docker-database` | this branch — Docker, Postgres, EF Core, health checks |
+| #3 | `backend/03-hangfire-serilog` | next — background jobs, structured logging |
 | #4 | `backend/04-auth` | ASP.NET Identity + JWT |
 | #5 | `backend/05-detections` | `/api/detections` CRUD matching frontend contract |
-| #6 | `backend/06-dashboard-stubs` | Stubs for remaining frontend endpoints |
+| #6 | `backend/06-dashboard-stubs` | stubs for remaining frontend endpoints |
