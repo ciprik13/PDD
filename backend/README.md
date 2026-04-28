@@ -92,6 +92,23 @@ docker compose -f docker-compose.yml up
 
 Then expose the api via your reverse proxy of choice (nginx, Caddy, etc.).
 
+## CORS
+
+The dashboard runs on a different origin than the API (Vite dev server on `:5173`, API on `:8080`), so the API has to send `Access-Control-Allow-Origin` for browser requests to go through. The allowlist is read from `Cors:AllowedOrigins`.
+
+**Local dev — nothing to do.** `docker compose up` sets `ASPNETCORE_ENVIRONMENT=Development` (via `docker-compose.override.yml`), which loads `appsettings.Development.json`. That file already whitelists `http://localhost:5173`, so the Vite dashboard can call `http://localhost:8080/api/...` out of the box.
+
+**Production / additional origins.** Set them through `.env`:
+
+```dotenv
+CORS_ALLOWED_ORIGIN_0=https://app.agricure.example.com
+CORS_ALLOWED_ORIGIN_1=https://staging.agricure.example.com
+```
+
+`docker-compose.yml` maps these onto `Cors__AllowedOrigins__0` / `_1`. For more than two origins, add `CORS_ALLOWED_ORIGIN_2=…` to `.env` and a matching `Cors__AllowedOrigins__2: ${CORS_ALLOWED_ORIGIN_2:-}` line under the `api` service in `docker-compose.yml`.
+
+Origins must be exact (`scheme://host[:port]`, no trailing slash, no path). Bearer tokens travel in `Authorization` headers (not cookies), so credentials mode is intentionally off — origins don't need to be pinned for cookie-bearing flows.
+
 ## Repository layout
 
 See `CLAUDE.md` for the full reference rules.

@@ -12,6 +12,8 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
 using Serilog;
 
+const string CorsPolicyName = "AgriCureFrontend";
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((ctx, services, cfg) => cfg
@@ -27,6 +29,26 @@ builder.Host.UseSerilog((ctx, services, cfg) => cfg
         formatProvider: CultureInfo.InvariantCulture));
 
 builder.Services.AddProblemDetails();
+
+// Browser-origin allowlist for the React/Vite dashboard.
+// Empty list = no cross-origin requests are accepted (safe default for prod
+// until operators populate Cors:AllowedOrigins via env / appsettings).
+// Bearer tokens travel in the Authorization header, so AllowCredentials is
+// intentionally not set — that lets us keep the simple WithOrigins() check
+// instead of pinning to a specific scheme+host triple.
+builder.Services.AddCors(options =>
+{
+    var allowedOrigins = builder.Configuration
+        .GetSection("Cors:AllowedOrigins")
+        .Get<string[]>()
+        ?.Where(o => !string.IsNullOrWhiteSpace(o))
+        .ToArray() ?? [];
+
+    options.AddPolicy(CorsPolicyName, policy => policy
+        .WithOrigins(allowedOrigins)
+        .AllowAnyHeader()
+        .AllowAnyMethod());
+});
 
 builder.Services.AddControllers()
     .AddJsonOptions(opts =>
@@ -99,6 +121,8 @@ builder.Services.AddHealthChecks()
 var app = builder.Build();
 
 app.UseSerilogRequestLogging();
+
+app.UseCors(CorsPolicyName);
 
 app.UseAuthentication();
 app.UseAuthorization();

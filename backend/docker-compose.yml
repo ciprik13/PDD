@@ -35,6 +35,10 @@ services:
       Jwt__RefreshTokenDays: ${JWT_REFRESH_TOKEN_DAYS:-7}
       Admin__Email: ${ADMIN_EMAIL:-}
       Admin__Password: ${ADMIN_PASSWORD:-}
+      # CORS allowlist for prod. In Development, appsettings.Development.json
+      # already includes http://localhost:5173, so leave these blank locally.
+      Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN_0:-}
+      Cors__AllowedOrigins__1: ${CORS_ALLOWED_ORIGIN_1:-}
     networks:
       - agricure
     restart: unless-stopped

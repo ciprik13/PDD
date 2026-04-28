@@ -26,6 +26,7 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
                 ["Jwt:SigningKey"] = "test-only-signing-key-must-be-long-enough-for-hmacsha256",
                 ["Jwt:AccessTokenMinutes"] = "15",
                 ["Jwt:RefreshTokenDays"] = "7",
+                ["Cors:AllowedOrigins:0"] = "http://localhost:5173",
             });
         });
     }
