@@ -1,7 +1,22 @@
+import { useEffect, useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardHeader, Chip } from '@/components/shared/UI';
 import { useCameraFrame, useDetections, useEnvironment } from '@/hooks/useApi';
+import { tokenStore } from '@/services/api';
 import styles from './CameraPanel.module.css';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+
+/** Cere un stream token de la backend (valid 60s), returneaza URL-ul complet al stream-ului. */
+async function fetchStreamUrl(): Promise<string> {
+  const accessToken = tokenStore.getAccess();
+  const res = await fetch(`${API_BASE}/api/camera/token`, {
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+  });
+  if (!res.ok) throw new Error(`Token error: ${res.status}`);
+  const { token } = await res.json();
+  return `${API_BASE}/api/camera/stream?token=${token}`;
+}
 
 export function CameraPanel() {
   const { t } = useTranslation();
@@ -9,10 +24,65 @@ export function CameraPanel() {
   const { data: detections } = useDetections(1);
   const { data: env } = useEnvironment();
 
+  const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  const [streamError, setStreamError] = useState(false);
+  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── GPS live de pe Jetson ──────────────────────────────
+  const [liveGps, setLiveGps] = useState<{ lat: number; lon: number } | null>(null);
+
+  useEffect(() => {
+    if (!API_BASE) return;
+
+    const fetchGps = async () => {
+      try {
+        const accessToken = tokenStore.getAccess();
+        const res = await fetch(`${API_BASE}/api/camera/gps`, {
+          headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.fix && data.lat && data.lon) {
+            setLiveGps({ lat: data.lat, lon: data.lon });
+          }
+        }
+      } catch { /* Jetson offline */ }
+    };
+
+    fetchGps();
+    const interval = setInterval(fetchGps, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // ── Stream token ───────────────────────────────────────
+  const refreshStream = () => {
+    fetchStreamUrl()
+      .then((url) => {
+        setStreamUrl(url);
+        setStreamError(false);
+        refreshTimer.current = setTimeout(refreshStream, 55_000);
+      })
+      .catch(() => {
+        setStreamError(true);
+        refreshTimer.current = setTimeout(refreshStream, 5_000);
+      });
+  };
+
+  useEffect(() => {
+    refreshStream();
+    return () => {
+      if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    };
+  }, []);
+
   const latest = detections?.[0] ?? null;
   const hasDisease = latest?.severity === 'critical' || latest?.severity === 'warning';
   const pos = frame?.position;
   const diseaseCount = detections?.filter(d => d.severity !== 'healthy').length ?? 1;
+
+  // Coordonate finale: GPS live de pe Jetson, fallback la mock
+  const displayLat = liveGps?.lat ?? pos?.gps.lat;
+  const displayLon = liveGps?.lon ?? pos?.gps.lon;
 
   return (
     <div className={styles.wrapper}>
@@ -30,11 +100,27 @@ export function CameraPanel() {
 
         {/* Camera preview */}
         <div className={styles.camBox}>
-          <div className={styles.camFoliage} />
+          {streamError && (
+            <div style={{
+              position: 'absolute', inset: 0, display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              color: '#f87171', fontSize: 14, zIndex: 2,
+            }}>
+              Camera offline
+            </div>
+          )}
 
-          {/* TODO: Replace with actual MJPEG/WebRTC stream:
-              <img src={`${import.meta.env.VITE_API_BASE_URL}/api/camera/stream`} className={styles.camStream} alt="Live camera" />
-          */}
+          {streamUrl && !streamError && (
+            <img
+              src={streamUrl}
+              className={styles.camStream}
+              alt="Live camera"
+              onError={() => {
+                setStreamError(true);
+                setTimeout(refreshStream, 3_000);
+              }}
+            />
+          )}
 
           {/* Bounding box overlay */}
           {hasDisease && latest && (
@@ -58,7 +144,7 @@ export function CameraPanel() {
           <div className={styles.hud}>
             <div className={styles.hudTop}>
               <span className={styles.hudChip}>
-                ZED 2 · {frame?.resolution ?? '1080p'} · {frame?.fps ?? 30}fps · {t('camera.stereo')}
+                ZED 2 · {frame?.resolution ?? '1080p'} · {frame?.fps ?? 30}fps · stereo
               </span>
               {frame?.isRecording && (
                 <span className={styles.recChip}>
@@ -68,7 +154,7 @@ export function CameraPanel() {
             </div>
             <div className={styles.hudBottom}>
               <span className={styles.hudGps}>
-                {pos?.gps.lat.toFixed(4)}°N {pos?.gps.lon.toFixed(4)}°E · {t('camera.hudRow', { row: pos?.row })} · {pos?.positionMeters?.toFixed(1)}m
+                {displayLat?.toFixed(4) ?? '—'}°N {displayLon?.toFixed(4) ?? '—'}°E · Row {pos?.row} · {pos?.positionMeters?.toFixed(1)}m
               </span>
               {hasDisease && (
                 <span className={styles.hudFound}>
@@ -83,11 +169,11 @@ export function CameraPanel() {
         {/* GPS / position strip */}
         <div className={styles.posGrid}>
           <div className={styles.posItem}>
-            <div className={styles.posVal}>{pos?.gps.lat.toFixed(4) ?? '—'}°N</div>
+            <div className={styles.posVal}>{displayLat?.toFixed(6) ?? '—'}°N</div>
             <div className={styles.posLbl}>{t('camera.latitude')}</div>
           </div>
           <div className={styles.posItem}>
-            <div className={styles.posVal}>{pos?.gps.lon.toFixed(4) ?? '—'}°E</div>
+            <div className={styles.posVal}>{displayLon?.toFixed(6) ?? '—'}°E</div>
             <div className={styles.posLbl}>{t('camera.longitude')}</div>
           </div>
           <div className={styles.posItem}>
@@ -101,7 +187,6 @@ export function CameraPanel() {
       <Card>
         <CardHeader title={t('camera.modelTitle')} right={<Chip label={t('camera.modelOutput')} />} />
 
-        {/* Class probabilities */}
         <div className={styles.predictions}>
           {(latest?.allPredictions ?? []).map((p) => (
             <div key={p.diseaseClass} className={styles.predRow}>
@@ -129,7 +214,6 @@ export function CameraPanel() {
           ))}
         </div>
 
-        {/* Details table */}
         <div className={styles.detailTable}>
           <div className={styles.dtRow}>
             <span className={styles.dtLabel}>{t('camera.boundingBoxes')}</span>
@@ -155,7 +239,6 @@ export function CameraPanel() {
           </div>
         </div>
 
-        {/* Environment */}
         {env && (
           <div className={styles.envRow}>
             <div className={styles.envItem}>
