@@ -107,6 +107,63 @@ public class DetectionsScopingTests
         plantIds.Should().Contain(orphanPlantId);
     }
 
+    [Fact]
+    public async Task Get_by_id_returns_404_when_agriculture_does_not_own_plant()
+    {
+        var admin = await _factory.CreateAdminAsync();
+        var alice = await _factory.CreateAgricultureAsync();
+        var bob   = await _factory.CreateAgricultureAsync();
+
+        var bobPlantId = await SeedPlantAndDetectionAsync(admin.Client, ownerUserId: bob.UserId);
+        var bobDetectionId = await GetFirstDetectionIdForPlantAsync(admin.Client, bobPlantId);
+
+        var resp = await alice.Client.GetAsync($"/api/detections/{bobDetectionId}");
+
+        resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Get_by_id_returns_404_when_plant_is_unowned_and_caller_is_agriculture()
+    {
+        var admin = await _factory.CreateAdminAsync();
+        var alice = await _factory.CreateAgricultureAsync();
+
+        var orphanPlantId = await SeedPlantAndDetectionAsync(admin.Client, ownerUserId: null);
+        var orphanDetectionId = await GetFirstDetectionIdForPlantAsync(admin.Client, orphanPlantId);
+
+        var resp = await alice.Client.GetAsync($"/api/detections/{orphanDetectionId}");
+
+        resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task Get_by_id_returns_200_when_agriculture_owns_plant()
+    {
+        var admin = await _factory.CreateAdminAsync();
+        var alice = await _factory.CreateAgricultureAsync();
+
+        var alicePlantId = await SeedPlantAndDetectionAsync(admin.Client, ownerUserId: alice.UserId);
+        var aliceDetectionId = await GetFirstDetectionIdForPlantAsync(admin.Client, alicePlantId);
+
+        var resp = await alice.Client.GetAsync($"/api/detections/{aliceDetectionId}");
+
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    private static async Task<Guid> GetFirstDetectionIdForPlantAsync(HttpClient adminClient, string plantId)
+    {
+        var resp = await adminClient.GetAsync("/api/detections?limit=500");
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var json = await resp.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+
+        var match = doc.RootElement.EnumerateArray()
+            .First(d => d.GetProperty("plantId").GetString() == plantId);
+
+        return match.GetProperty("id").GetGuid();
+    }
+
     // Seeds a plant with the given owner via direct DbContext write, then creates a
     // detection on it via the admin's POST /api/detections. Returns the plantId.
     private async Task<string> SeedPlantAndDetectionAsync(HttpClient adminClient, Guid? ownerUserId)

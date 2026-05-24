@@ -1,3 +1,4 @@
+using AgriCure.Application.Common.Auth;
 using AgriCure.Application.Common.DTOs;
 using AgriCure.Application.Common.Interfaces;
 using FluentValidation;
@@ -16,13 +17,24 @@ internal sealed class GetDetectionByIdQueryValidator : AbstractValidator<GetDete
     }
 }
 
-internal sealed class GetDetectionByIdQueryHandler(IApplicationDbContext db)
+internal sealed class GetDetectionByIdQueryHandler(
+    IApplicationDbContext db,
+    ICurrentUserAccessor currentUser)
     : IRequestHandler<GetDetectionByIdQuery, DetectionDto?>
 {
     public async Task<DetectionDto?> Handle(
         GetDetectionByIdQuery request, CancellationToken cancellationToken)
     {
-        var detection = await db.Detections
+        var query = db.Detections.AsQueryable();
+
+        if (!currentUser.IsAdmin)
+        {
+            var userId = currentUser.RequireUserId();
+            query = query.Where(d => db.Plants
+                .Any(p => p.Id == d.PlantId && p.OwnerUserId == userId));
+        }
+
+        var detection = await query
             .FirstOrDefaultAsync(d => d.Id == request.Id, cancellationToken);
 
         return detection?.ToDto();
