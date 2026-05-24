@@ -15,6 +15,9 @@ public interface ICurrentUserAccessor
 
     bool IsAgriculture { get; }
 
-    /// <summary>Returns <see cref="UserId"/> or throws if the caller is anonymous.</summary>
+    /// <summary>
+    /// Returns <see cref="UserId"/> or throws <see cref="AuthenticationFailedException"/>
+    /// if <see cref="UserId"/> is <c>null</c> (anonymous caller OR missing/invalid <c>sub</c> claim).
+    /// </summary>
     Guid RequireUserId();
 }
