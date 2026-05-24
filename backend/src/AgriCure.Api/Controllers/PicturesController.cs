@@ -6,6 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace AgriCure.Api.Controllers;
 
+internal static class RouteNames
+{
+    public const string GetPictureById = "GetPictureById";
+}
+
 /// <summary>Picture upload, registration, lookup, and deletion.</summary>
 [Authorize]
 [Route("api/pictures")]
@@ -47,7 +52,7 @@ public sealed class PicturesController(
                     form.Title),
                 cancellationToken);
 
-            return CreatedAtRoute(nameof(GetById), new { id = dto.Id }, dto);
+            return CreatedAtRoute(RouteNames.GetPictureById, new { id = dto.Id }, dto);
         });
 
     /// <summary>Register a path the external sync server already uploaded to the configured bucket.</summary>
@@ -67,14 +72,14 @@ public sealed class PicturesController(
         ExecuteAsync(async () =>
         {
             var dto = await mediator.Send(command, cancellationToken);
-            return CreatedAtRoute(nameof(GetById), new { id = dto.Id }, dto);
+            return CreatedAtRoute(RouteNames.GetPictureById, new { id = dto.Id }, dto);
         });
 
     /// <summary>Fetch a single picture's metadata + URL.</summary>
     /// <response code="200">Picture found.</response>
     /// <response code="401">Caller is not authenticated.</response>
     /// <response code="404">No picture with that id.</response>
-    [HttpGet("{id:guid}", Name = nameof(GetById))]
+    [HttpGet("{id:guid}", Name = RouteNames.GetPictureById)]
     [ProducesResponseType(typeof(PictureDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
