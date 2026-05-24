@@ -8,6 +8,7 @@ using AgriCure.Infrastructure;
 using AgriCure.Infrastructure.Identity;
 using Hangfire;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
 using Serilog;
@@ -66,6 +67,19 @@ builder.Services.ConfigureHttpJsonOptions(opts =>
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure();
 builder.Services.AddHangfireInfrastructure();
+
+// Picture uploads can run up to StorageOptions.MaxUploadBytes; raise both the form
+// limit and the Kestrel request-body limit so multipart uploads don't get truncated.
+var storageMaxBytes = builder.Configuration.GetValue<long?>("Storage:MaxUploadBytes")
+    ?? 25 * 1024 * 1024;
+builder.Services.Configure<FormOptions>(o =>
+{
+    o.MultipartBodyLengthLimit = storageMaxBytes;
+});
+builder.WebHost.ConfigureKestrel(o =>
+{
+    o.Limits.MaxRequestBodySize = storageMaxBytes;
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(opts =>
