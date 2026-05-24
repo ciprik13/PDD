@@ -16,4 +16,8 @@
     <ProjectReference Include="..\AgriCure.Domain\AgriCure.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="AgriCure.Application.Tests" />
+  </ItemGroup>
+
 </Project>
