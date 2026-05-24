@@ -6,9 +6,17 @@ services:
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
 
+  minio:
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+
   api:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       Cors__AllowedOrigins__0: "http://localhost:5173"
+      # In-container the API talks to minio:9000; PublicBaseUrl is what the
+      # browser/Postman hits, so it points at the host-published port.
+      Storage__PublicBaseUrl: "http://localhost:${MINIO_API_PORT:-9000}"
     ports:
       - "${API_PORT:-8080}:8080"

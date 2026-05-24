@@ -17,6 +17,24 @@ services:
       - agricure
     restart: unless-stopped
 
+  minio:
+    image: minio/minio:RELEASE.2025-04-08T15-41-24Z
+    container_name: agricure-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - agricure
+    restart: unless-stopped
+
   api:
     build:
       context: .
@@ -24,6 +42,8 @@ services:
     container_name: agricure-api
     depends_on:
       postgres:
+        condition: service_healthy
+      minio:
         condition: service_healthy
     environment:
       ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
@@ -39,6 +59,12 @@ services:
       # already includes http://localhost:5173, so leave these blank locally.
       Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN_0:-}
       Cors__AllowedOrigins__1: ${CORS_ALLOWED_ORIGIN_1:-}
+      Storage__Endpoint: ${STORAGE_ENDPOINT:-minio:9000}
+      Storage__AccessKey: ${STORAGE_ACCESS_KEY:-minioadmin}
+      Storage__SecretKey: ${STORAGE_SECRET_KEY:-minioadmin}
+      Storage__UseSsl: ${STORAGE_USE_SSL:-false}
+      Storage__PublicBaseUrl: ${STORAGE_PUBLIC_BASE_URL:-}
+      Storage__DefaultBucket: ${STORAGE_DEFAULT_BUCKET:-agricure-frames}
     networks:
       - agricure
     restart: unless-stopped
@@ -48,3 +74,4 @@ networks:
 
 volumes:
   postgres-data:
+  minio-data:
