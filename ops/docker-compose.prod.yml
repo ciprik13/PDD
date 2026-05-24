@@ -31,8 +31,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # Loopback only — host nginx proxies https://media.agricure.online → :9000.
-    # Console (:9001) is loopback too; reach it via SSH tunnel.
+    # Loopback only — host nginx proxies:
+    #   https://media.agricure.online  → :9000 (S3 API, public read)
+    #   https://storage.agricure.online → :9001 (admin console, login-protected)
     ports:
       - "127.0.0.1:${MINIO_API_HOST_PORT:-9000}:9000"
       - "127.0.0.1:${MINIO_CONSOLE_HOST_PORT:-9001}:9001"

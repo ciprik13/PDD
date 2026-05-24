@@ -15,14 +15,17 @@ The companion workflow is `.github/workflows/build-and-deploy.yml`.
 ## Topology
 
 ```
-   https://agricure.online        ┐
-   https://api.agricure.online    │ ──▶  host nginx (:80, :443) ──▶  127.0.0.1:8082 (frontend)
-   https://media.agricure.online  │                                  127.0.0.1:8090 (api → :8080 in container)
-                                  ┘                                  127.0.0.1:9000 (minio → :9000 in container)
+   https://agricure.online          ┐
+   https://api.agricure.online      │                                127.0.0.1:8082 (frontend)
+   https://media.agricure.online    │ ─▶  host nginx (:80, :443) ─▶  127.0.0.1:8090 (api → :8080 in container)
+   https://storage.agricure.online  │                                127.0.0.1:9000 (minio S3 API)
+                                    ┘                                127.0.0.1:9001 (minio console — login-protected)
 ```
 
-The MinIO console (`:9001`) is loopback-only and is **not** proxied through
-nginx — reach it via SSH tunnel when you need it:
+The MinIO admin console at `https://storage.agricure.online` is
+login-protected (MinIO root credentials) — use it to browse buckets and
+manage objects from any browser. As a fallback if nginx is down, you can
+still SSH-tunnel to it directly:
 
 ```bash
 ssh -L 9001:127.0.0.1:9001 "$SSH_USER@$SSH_HOST"
@@ -46,12 +49,13 @@ public internet — nginx is the only thing that talks to them.
 
 ### 1. DNS
 
-At your registrar, add three A records pointing at the VPS IP:
+At your registrar, add four A records pointing at the VPS IP:
 
 ```
-agricure.online        A    <VPS_IP>
-api.agricure.online    A    <VPS_IP>
-media.agricure.online  A    <VPS_IP>
+agricure.online          A    <VPS_IP>
+api.agricure.online      A    <VPS_IP>
+media.agricure.online    A    <VPS_IP>
+storage.agricure.online  A    <VPS_IP>
 ```
 
 ### 2. Host nginx + TLS
@@ -61,7 +65,10 @@ Install nginx and certbot on the VPS, then drop the snippet below at
 
 ```nginx
 # /etc/nginx/sites-available/agricure
-# After saving, run: sudo certbot --nginx -d agricure.online -d api.agricure.online -d media.agricure.online
+# After saving, run:
+#   sudo certbot --nginx \
+#     -d agricure.online -d api.agricure.online \
+#     -d media.agricure.online -d storage.agricure.online
 # Certbot will inject the listen 443 / ssl_certificate lines automatically.
 
 server {
@@ -122,6 +129,38 @@ server {
         proxy_request_buffering off;
     }
 }
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name storage.agricure.online;
+
+    # Console can upload via the browser too.
+    client_max_body_size 100m;
+
+    # Longer timeouts — uploads through the console can be slow.
+    proxy_connect_timeout 300s;
+    proxy_send_timeout    300s;
+    proxy_read_timeout    300s;
+
+    location / {
+        proxy_pass         http://127.0.0.1:9001;
+        proxy_http_version 1.1;
+
+        # WebSocket upgrade — the console uses WS for live updates.
+        proxy_set_header   Upgrade           $http_upgrade;
+        proxy_set_header   Connection        "upgrade";
+
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+
+        proxy_buffering           off;
+        proxy_request_buffering   off;
+        chunked_transfer_encoding off;
+    }
+}
 ```
 
 Enable + obtain certs:
@@ -129,7 +168,9 @@ Enable + obtain certs:
 ```bash
 sudo ln -s /etc/nginx/sites-available/agricure /etc/nginx/sites-enabled/agricure
 sudo nginx -t && sudo systemctl reload nginx
-sudo certbot --nginx -d agricure.online -d api.agricure.online -d media.agricure.online
+sudo certbot --nginx \
+  -d agricure.online -d api.agricure.online \
+  -d media.agricure.online -d storage.agricure.online
 ```
 
 Certbot's package installs a renewal timer automatically; verify with
