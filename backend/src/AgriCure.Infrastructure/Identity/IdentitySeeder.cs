@@ -21,7 +21,12 @@ public static class IdentitySeeder
     {
         var roleManager = sp.GetRequiredService<RoleManager<ApplicationRole>>();
 
-        foreach (var roleName in new[] { ApplicationRole.Admin, ApplicationRole.User })
+        foreach (var roleName in new[]
+                 {
+                     ApplicationRole.Admin,
+                     ApplicationRole.User,
+                     ApplicationRole.Agriculture,
+                 })
         {
             if (!await roleManager.RoleExistsAsync(roleName))
             {
