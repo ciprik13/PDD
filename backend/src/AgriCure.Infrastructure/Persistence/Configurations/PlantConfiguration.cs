@@ -1,4 +1,5 @@
 using AgriCure.Domain.Detections;
+using AgriCure.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -12,5 +13,12 @@ internal sealed class PlantConfiguration : IEntityTypeConfiguration<Plant>
 
         builder.Property(p => p.Id)
             .HasMaxLength(64);
+
+        builder.HasOne<ApplicationUser>()
+            .WithMany()
+            .HasForeignKey(p => p.OwnerUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasIndex(p => p.OwnerUserId);
     }
 }
