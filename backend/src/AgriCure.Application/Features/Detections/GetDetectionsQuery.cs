@@ -1,3 +1,4 @@
+using AgriCure.Application.Common.Auth;
 using AgriCure.Application.Common.DTOs;
 using AgriCure.Application.Common.Interfaces;
 using FluentValidation;
@@ -16,7 +17,9 @@ internal sealed class GetDetectionsQueryValidator : AbstractValidator<GetDetecti
     }
 }
 
-internal sealed class GetDetectionsQueryHandler(IApplicationDbContext db)
+internal sealed class GetDetectionsQueryHandler(
+    IApplicationDbContext db,
+    ICurrentUserAccessor currentUser)
     : IRequestHandler<GetDetectionsQuery, IReadOnlyList<DetectionDto>>
 {
     public const int MaxLimit = 200;
@@ -26,7 +29,16 @@ internal sealed class GetDetectionsQueryHandler(IApplicationDbContext db)
     {
         var clamped = Math.Min(request.Limit, MaxLimit);
 
-        var detections = await db.Detections
+        var query = db.Detections.AsQueryable();
+
+        if (!currentUser.IsAdmin)
+        {
+            var userId = currentUser.RequireUserId();
+            query = query.Where(d => db.Plants
+                .Any(p => p.Id == d.PlantId && p.OwnerUserId == userId));
+        }
+
+        var detections = await query
             .OrderByDescending(d => d.Timestamp)
             .Take(clamped)
             .ToListAsync(cancellationToken);
