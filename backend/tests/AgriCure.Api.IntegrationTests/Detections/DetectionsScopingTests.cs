@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 
 namespace AgriCure.Api.IntegrationTests.Detections;
 
@@ -18,6 +19,41 @@ public class DetectionsScopingTests
         var plainUser = await _factory.CreatePlainUserAsync();
 
         var resp = await plainUser.Client.GetAsync("/api/detections");
+
+        resp.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task Post_with_agriculture_role_returns_403()
+    {
+        var agriculture = await _factory.CreateAgricultureAsync();
+
+        var resp = await agriculture.Client.PostAsJsonAsync(
+            "/api/detections",
+            DetectionTestData.BuildCreateBody());
+
+        resp.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task Put_with_agriculture_role_returns_403()
+    {
+        var agriculture = await _factory.CreateAgricultureAsync();
+        var id = Guid.NewGuid();
+
+        var resp = await agriculture.Client.PutAsJsonAsync(
+            $"/api/detections/{id}",
+            DetectionTestData.BuildUpdateBody(id));
+
+        resp.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task Delete_with_agriculture_role_returns_403()
+    {
+        var agriculture = await _factory.CreateAgricultureAsync();
+
+        var resp = await agriculture.Client.DeleteAsync($"/api/detections/{Guid.NewGuid()}");
 
         resp.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
