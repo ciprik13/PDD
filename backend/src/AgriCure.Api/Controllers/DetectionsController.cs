@@ -18,6 +18,7 @@ public sealed class DetectionsController(
     /// <response code="400">Validation error — `limit` must be greater than zero.</response>
     /// <response code="401">Caller is not authenticated.</response>
     [HttpGet]
+    [Authorize(Roles = "admin,agriculture")]
     [ProducesResponseType(typeof(IReadOnlyList<DetectionDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -33,6 +34,7 @@ public sealed class DetectionsController(
     /// <response code="401">Caller is not authenticated.</response>
     /// <response code="404">No detection with that id.</response>
     [HttpGet("{id:guid}", Name = nameof(GetById))]
+    [Authorize(Roles = "admin,agriculture")]
     [ProducesResponseType(typeof(DetectionDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]

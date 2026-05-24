@@ -17,12 +17,12 @@ public class DetectionsCrudTests
     [Fact]
     public async Task Get_list_returns_200_and_orders_newest_first()
     {
-        var authed = await _factory.CreateAuthenticatedClientAsync();
+        var admin = await _factory.CreateAdminAsync();
 
-        var createResp = await authed.PostAsJsonAsync("/api/detections", DetectionTestData.BuildCreateBody());
+        var createResp = await admin.Client.PostAsJsonAsync("/api/detections", DetectionTestData.BuildCreateBody());
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
 
-        var listResp = await authed.GetAsync("/api/detections?limit=50");
+        var listResp = await admin.Client.GetAsync("/api/detections?limit=50");
         listResp.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var json = await listResp.Content.ReadAsStringAsync();
@@ -42,8 +42,8 @@ public class DetectionsCrudTests
     [Fact]
     public async Task Get_list_with_zero_limit_returns_400()
     {
-        var authed = await _factory.CreateAuthenticatedClientAsync();
-        var resp = await authed.GetAsync("/api/detections?limit=0");
+        var admin = await _factory.CreateAdminAsync();
+        var resp = await admin.Client.GetAsync("/api/detections?limit=0");
         resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
@@ -58,22 +58,22 @@ public class DetectionsCrudTests
     [Fact]
     public async Task Get_by_id_returns_404_for_missing()
     {
-        var authed = await _factory.CreateAuthenticatedClientAsync();
-        var resp = await authed.GetAsync($"/api/detections/{Guid.NewGuid()}");
+        var admin = await _factory.CreateAdminAsync();
+        var resp = await admin.Client.GetAsync($"/api/detections/{Guid.NewGuid()}");
         resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task Get_by_id_returns_200_for_existing()
     {
-        var authed = await _factory.CreateAuthenticatedClientAsync();
+        var admin = await _factory.CreateAdminAsync();
 
-        var createResp = await authed.PostAsJsonAsync("/api/detections", DetectionTestData.BuildCreateBody());
+        var createResp = await admin.Client.PostAsJsonAsync("/api/detections", DetectionTestData.BuildCreateBody());
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
         var location = createResp.Headers.Location;
         location.Should().NotBeNull();
 
-        var fetched = await authed.GetAsync(location);
+        var fetched = await admin.Client.GetAsync(location);
         fetched.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var json = await fetched.Content.ReadAsStringAsync();
@@ -94,8 +94,8 @@ public class DetectionsCrudTests
     [Fact]
     public async Task Post_with_invalid_payload_returns_400()
     {
-        var authed = await _factory.CreateAuthenticatedClientAsync();
-        var resp = await authed.PostAsJsonAsync("/api/detections", new
+        var admin = await _factory.CreateAdminAsync();
+        var resp = await admin.Client.PostAsJsonAsync("/api/detections", new
         {
             frameId = 0,
             timestamp = DateTimeOffset.UtcNow,
@@ -114,18 +114,18 @@ public class DetectionsCrudTests
     [Fact]
     public async Task Put_returns_204_for_existing()
     {
-        var authed = await _factory.CreateAuthenticatedClientAsync();
+        var admin = await _factory.CreateAdminAsync();
 
-        var createResp = await authed.PostAsJsonAsync("/api/detections", DetectionTestData.BuildCreateBody());
+        var createResp = await admin.Client.PostAsJsonAsync("/api/detections", DetectionTestData.BuildCreateBody());
         createResp.StatusCode.Should().Be(HttpStatusCode.Created);
         var idJson = await createResp.Content.ReadAsStringAsync();
         var id = JsonDocument.Parse(idJson).RootElement.GetProperty("id").GetGuid();
 
-        var updateResp = await authed.PutAsJsonAsync(
+        var updateResp = await admin.Client.PutAsJsonAsync(
             $"/api/detections/{id}", DetectionTestData.BuildUpdateBody(id));
         updateResp.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        var fetched = await authed.GetAsync($"/api/detections/{id}");
+        var fetched = await admin.Client.GetAsync($"/api/detections/{id}");
         var json = await fetched.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(json);
         doc.RootElement.GetProperty("severity").GetString().Should().Be("critical");
@@ -134,10 +134,10 @@ public class DetectionsCrudTests
     [Fact]
     public async Task Put_returns_404_for_unknown_id()
     {
-        var authed = await _factory.CreateAuthenticatedClientAsync();
+        var admin = await _factory.CreateAdminAsync();
         var randomId = Guid.NewGuid();
 
-        var resp = await authed.PutAsJsonAsync(
+        var resp = await admin.Client.PutAsJsonAsync(
             $"/api/detections/{randomId}", DetectionTestData.BuildUpdateBody(randomId));
 
         resp.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -146,11 +146,11 @@ public class DetectionsCrudTests
     [Fact]
     public async Task Put_with_id_mismatch_between_route_and_body_returns_400()
     {
-        var authed = await _factory.CreateAuthenticatedClientAsync();
+        var admin = await _factory.CreateAdminAsync();
         var routeId = Guid.NewGuid();
         var bodyId = Guid.NewGuid();
 
-        var resp = await authed.PutAsJsonAsync(
+        var resp = await admin.Client.PutAsJsonAsync(
             $"/api/detections/{routeId}", DetectionTestData.BuildUpdateBody(bodyId));
 
         resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -171,24 +171,24 @@ public class DetectionsCrudTests
     [Fact]
     public async Task Delete_returns_204_for_existing()
     {
-        var authed = await _factory.CreateAuthenticatedClientAsync();
+        var admin = await _factory.CreateAdminAsync();
 
-        var createResp = await authed.PostAsJsonAsync("/api/detections", DetectionTestData.BuildCreateBody());
+        var createResp = await admin.Client.PostAsJsonAsync("/api/detections", DetectionTestData.BuildCreateBody());
         var idJson = await createResp.Content.ReadAsStringAsync();
         var id = JsonDocument.Parse(idJson).RootElement.GetProperty("id").GetGuid();
 
-        var deleteResp = await authed.DeleteAsync($"/api/detections/{id}");
+        var deleteResp = await admin.Client.DeleteAsync($"/api/detections/{id}");
         deleteResp.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
-        var fetchAfter = await authed.GetAsync($"/api/detections/{id}");
+        var fetchAfter = await admin.Client.GetAsync($"/api/detections/{id}");
         fetchAfter.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task Delete_is_idempotent_for_unknown_id()
     {
-        var authed = await _factory.CreateAuthenticatedClientAsync();
-        var resp = await authed.DeleteAsync($"/api/detections/{Guid.NewGuid()}");
+        var admin = await _factory.CreateAdminAsync();
+        var resp = await admin.Client.DeleteAsync($"/api/detections/{Guid.NewGuid()}");
         resp.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 
