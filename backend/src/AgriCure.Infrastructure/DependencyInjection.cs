@@ -1,10 +1,12 @@
 using System.Text;
 using AgriCure.Application.Common.Auth;
 using AgriCure.Application.Common.Interfaces;
+using AgriCure.Application.Common.Pictures;
 using AgriCure.Application.Common.Storage;
 using AgriCure.Infrastructure.Auth;
 using AgriCure.Infrastructure.Identity;
 using AgriCure.Infrastructure.Persistence;
+using AgriCure.Infrastructure.Pictures;
 using AgriCure.Infrastructure.Storage;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -125,6 +127,8 @@ public static class DependencyInjection
 
         services.AddSingleton<IStorageService, MinioStorageService>();
         services.AddHostedService<MinioBucketProvisioner>();
+
+        services.AddScoped<IPictureService, PictureService>();
 
         return services;
     }

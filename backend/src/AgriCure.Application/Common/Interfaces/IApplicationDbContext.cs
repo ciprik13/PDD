@@ -1,5 +1,6 @@
 using AgriCure.Domain.Detections;
 using AgriCure.Domain.Identity;
+using AgriCure.Domain.Pictures;
 using Microsoft.EntityFrameworkCore;
 
 namespace AgriCure.Application.Common.Interfaces;
@@ -13,6 +14,8 @@ public interface IApplicationDbContext
     DbSet<ClassPrediction> Predictions { get; }
 
     DbSet<Plant> Plants { get; }
+
+    DbSet<Picture> Pictures { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

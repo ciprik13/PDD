@@ -1,6 +1,7 @@
 using AgriCure.Application.Common.Interfaces;
 using AgriCure.Domain.Detections;
 using AgriCure.Domain.Identity;
+using AgriCure.Domain.Pictures;
 using AgriCure.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -19,6 +20,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<ClassPrediction> Predictions => Set<ClassPrediction>();
 
     public DbSet<Plant> Plants => Set<Plant>();
+
+    public DbSet<Picture> Pictures => Set<Picture>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
