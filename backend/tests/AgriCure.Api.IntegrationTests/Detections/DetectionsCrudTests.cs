@@ -126,6 +126,7 @@ public class DetectionsCrudTests
         updateResp.StatusCode.Should().Be(HttpStatusCode.NoContent);
 
         var fetched = await admin.Client.GetAsync($"/api/detections/{id}");
+        fetched.StatusCode.Should().Be(HttpStatusCode.OK);
         var json = await fetched.Content.ReadAsStringAsync();
         using var doc = JsonDocument.Parse(json);
         doc.RootElement.GetProperty("severity").GetString().Should().Be("critical");
@@ -174,6 +175,7 @@ public class DetectionsCrudTests
         var admin = await _factory.CreateAdminAsync();
 
         var createResp = await admin.Client.PostAsJsonAsync("/api/detections", DetectionTestData.BuildCreateBody());
+        createResp.StatusCode.Should().Be(HttpStatusCode.Created);
         var idJson = await createResp.Content.ReadAsStringAsync();
         var id = JsonDocument.Parse(idJson).RootElement.GetProperty("id").GetGuid();
 
