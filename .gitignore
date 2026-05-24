@@ -140,3 +140,8 @@ $RECYCLE.BIN/
 *.swp
 *~
 .cache/
+
+# ---------------------------------------------------------------------
+# Local-only workflow artifacts (superpowers brainstorming specs/plans)
+# ---------------------------------------------------------------------
+docs/superpowers/
