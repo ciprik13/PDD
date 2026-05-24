@@ -53,7 +53,8 @@ internal static class TestUsers
                 because: $"user create should succeed: {string.Join("; ", createResult.Errors.Select(e => e.Description))}");
 
             var roleResult = await userManager.AddToRoleAsync(user, roleName);
-            roleResult.Succeeded.Should().BeTrue();
+            roleResult.Succeeded.Should().BeTrue(
+                because: $"role assign should succeed: {string.Join("; ", roleResult.Errors.Select(e => e.Description))}");
 
             userId = user.Id;
         }
