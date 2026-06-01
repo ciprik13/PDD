@@ -17,5 +17,7 @@ public interface IApplicationDbContext
 
     DbSet<Picture> Pictures { get; }
 
+    DbSet<ApiKey> ApiKeys { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }

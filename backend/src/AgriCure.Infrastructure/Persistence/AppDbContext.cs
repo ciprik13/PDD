@@ -23,6 +23,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
 
     public DbSet<Picture> Pictures => Set<Picture>();
 
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.HasDefaultSchema(DefaultSchema);
