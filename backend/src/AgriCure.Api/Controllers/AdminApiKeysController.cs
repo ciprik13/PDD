@@ -37,7 +37,7 @@ public sealed class AdminApiKeysController(
         {
             var dto = await mediator.Send(command, cancellationToken);
             return CreatedAtRoute(
-                nameof(GetById),
+                "AdminApiKeys_GetById",
                 new { id = dto.Id },
                 dto);
         });
@@ -68,7 +68,7 @@ public sealed class AdminApiKeysController(
     /// <response code="401">Caller is not authenticated.</response>
     /// <response code="403">Caller lacks the admin role.</response>
     /// <response code="404">No key with that id.</response>
-    [HttpGet("{id:guid}", Name = nameof(GetById))]
+    [HttpGet("{id:guid}", Name = "AdminApiKeys_GetById")]
     [ProducesResponseType(typeof(ApiKeyDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]

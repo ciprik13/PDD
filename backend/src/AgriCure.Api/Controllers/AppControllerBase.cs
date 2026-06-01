@@ -71,6 +71,24 @@ public abstract class AppControllerBase : ControllerBase
                 detail: ex.Message,
                 statusCode: StatusCodes.Status404NotFound);
         }
+        catch (UnprocessableEntityException ex)
+        {
+            Logger.LogInformation(
+                "Unprocessable entity in {Controller}.{Action}: {ErrorCount} error(s)",
+                controllerName, actionName, ex.Errors.Count);
+
+            var modelState = new ModelStateDictionary();
+            foreach (var (property, messages) in ex.Errors)
+            {
+                foreach (var message in messages)
+                {
+                    modelState.AddModelError(ToCamelCase(property), message);
+                }
+            }
+            return ValidationProblem(
+                modelStateDictionary: modelState,
+                statusCode: StatusCodes.Status422UnprocessableEntity);
+        }
         catch (Exception ex)
         {
             Logger.LogError(

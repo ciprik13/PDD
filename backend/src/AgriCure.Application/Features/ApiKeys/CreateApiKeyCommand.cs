@@ -1,5 +1,6 @@
 using AgriCure.Application.Common.ApiKeys;
 using AgriCure.Application.Common.Auth;
+using AgriCure.Application.Common.Exceptions;
 using AgriCure.Application.Features.ApiKeys.Common;
 using FluentValidation;
 using MediatR;
@@ -38,23 +39,17 @@ internal sealed class CreateApiKeyCommandHandler(
             request.OwnerUserId, "agriculture", cancellationToken);
         if (!ownerIsAgriculture)
         {
-            throw new ValidationException(new[]
-            {
-                new FluentValidation.Results.ValidationFailure(
-                    nameof(CreateApiKeyCommand.OwnerUserId),
-                    "Owner must be an existing user with the agriculture role."),
-            });
+            throw new UnprocessableEntityException(
+                nameof(CreateApiKeyCommand.OwnerUserId),
+                "Owner must be an existing user with the agriculture role.");
         }
 
         var existing = await apiKeys.ListAsync(request.OwnerUserId, includeRevoked: false, cancellationToken);
         if (existing.Any(k => string.Equals(k.Name, request.Name, StringComparison.OrdinalIgnoreCase)))
         {
-            throw new ValidationException(new[]
-            {
-                new FluentValidation.Results.ValidationFailure(
-                    nameof(CreateApiKeyCommand.Name),
-                    $"An active key named '{request.Name}' already exists for this user."),
-            });
+            throw new UnprocessableEntityException(
+                nameof(CreateApiKeyCommand.Name),
+                $"An active key named '{request.Name}' already exists for this user.");
         }
 
         return await apiKeys.IssueAsync(request.OwnerUserId, request.Name, adminId, cancellationToken);
