@@ -10,6 +10,8 @@ public interface IIdentityService
 
     Task<IdentityUserContext?> GetUserContextAsync(
         Guid userId, CancellationToken cancellationToken);
+
+    Task<bool> UserHasRoleAsync(Guid userId, string roleName, CancellationToken cancellationToken);
 }
 
 public sealed record IdentityErrorInfo(string Code, string Description);

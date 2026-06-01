@@ -59,6 +59,16 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager) 
         return new IdentityUserContext(user.Id, user.Email ?? string.Empty, roles);
     }
 
+    public async Task<bool> UserHasRoleAsync(Guid userId, string roleName, CancellationToken cancellationToken)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is null)
+        {
+            return false;
+        }
+        return await userManager.IsInRoleAsync(user, roleName);
+    }
+
     private static IdentityErrorInfo ToInfo(IdentityError error) =>
         new(error.Code, error.Description);
 }
