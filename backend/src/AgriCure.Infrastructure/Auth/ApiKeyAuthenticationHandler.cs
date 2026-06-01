@@ -5,6 +5,7 @@ using AgriCure.Infrastructure.ApiKeys;
 using AgriCure.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -15,7 +16,8 @@ internal sealed class ApiKeyAuthenticationHandler(
     ILoggerFactory logger,
     UrlEncoder encoder,
     IApiKeyService apiKeyService,
-    UserManager<ApplicationUser> userManager)
+    UserManager<ApplicationUser> userManager,
+    IServiceScopeFactory scopeFactory)
     : AuthenticationHandler<ApiKeyAuthenticationOptions>(options, logger, encoder)
 {
     private const int ExpectedPlaintextLength = 52; // "pdd_live_" (9) + 43 base64url chars
@@ -71,7 +73,9 @@ internal sealed class ApiKeyAuthenticationHandler(
         {
             try
             {
-                await apiKeyService.TouchLastUsedAsync(keyId, CancellationToken.None);
+                using var scope = scopeFactory.CreateScope();
+                var svc = scope.ServiceProvider.GetRequiredService<IApiKeyService>();
+                await svc.TouchLastUsedAsync(keyId, CancellationToken.None);
             }
             catch (Exception ex)
             {
