@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AgriCure.Application\AgriCure.Application.csproj" />
+    <ProjectReference Include="..\..\src\AgriCure.Infrastructure\AgriCure.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
