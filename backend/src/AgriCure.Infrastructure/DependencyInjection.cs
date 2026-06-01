@@ -1,8 +1,10 @@
 using System.Text;
+using AgriCure.Application.Common.ApiKeys;
 using AgriCure.Application.Common.Auth;
 using AgriCure.Application.Common.Interfaces;
 using AgriCure.Application.Common.Pictures;
 using AgriCure.Application.Common.Storage;
+using AgriCure.Infrastructure.ApiKeys;
 using AgriCure.Infrastructure.Auth;
 using AgriCure.Infrastructure.Identity;
 using AgriCure.Infrastructure.Persistence;
@@ -130,6 +132,8 @@ public static class DependencyInjection
         services.AddHostedService<MinioBucketProvisioner>();
 
         services.AddScoped<IPictureService, PictureService>();
+
+        services.AddScoped<IApiKeyService, ApiKeyService>();
 
         return services;
     }
