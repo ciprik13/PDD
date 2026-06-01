@@ -120,6 +120,7 @@ public sealed class GetDetectionsQueryHandlerTests
         public DbSet<ClassPrediction> Predictions => inner.Predictions;
         public DbSet<Plant> Plants => inner.Plants;
         public DbSet<AgriCure.Domain.Pictures.Picture> Pictures => inner.Pictures;
+        public DbSet<DetectionPicture> DetectionPictures => inner.DetectionPictures;
         public DbSet<AgriCure.Domain.Identity.ApiKey> ApiKeys => inner.ApiKeys;
         public Task<int> SaveChangesAsync(CancellationToken ct) => inner.SaveChangesAsync(ct);
     }
@@ -130,6 +131,7 @@ public sealed class GetDetectionsQueryHandlerTests
         public DbSet<Detection> Detections => Set<Detection>();
         public DbSet<ClassPrediction> Predictions => Set<ClassPrediction>();
         public DbSet<AgriCure.Domain.Pictures.Picture> Pictures => Set<AgriCure.Domain.Pictures.Picture>();
+        public DbSet<DetectionPicture> DetectionPictures => Set<DetectionPicture>();
         public DbSet<AgriCure.Domain.Identity.RefreshToken> RefreshTokens => Set<AgriCure.Domain.Identity.RefreshToken>();
         public DbSet<AgriCure.Domain.Identity.ApiKey> ApiKeys => Set<AgriCure.Domain.Identity.ApiKey>();
 
@@ -137,6 +139,7 @@ public sealed class GetDetectionsQueryHandlerTests
         {
             builder.Entity<Detection>().OwnsOne(d => d.BoundingBox);
             builder.Entity<Detection>().HasMany(d => d.Predictions).WithOne().HasForeignKey(p => p.DetectionId);
+            builder.Entity<DetectionPicture>().HasKey(dp => new { dp.DetectionId, dp.PictureId });
             base.OnModelCreating(builder);
         }
     }

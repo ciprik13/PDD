@@ -226,6 +226,7 @@ public sealed class ApiKeyServiceTests
         public DbSet<ClassPrediction> Predictions => inner.Predictions;
         public DbSet<Plant> Plants => inner.Plants;
         public DbSet<Picture> Pictures => inner.Pictures;
+        public DbSet<DetectionPicture> DetectionPictures => inner.DetectionPictures;
         public DbSet<ApiKey> ApiKeys => inner.ApiKeys;
         public Task<int> SaveChangesAsync(CancellationToken ct) => inner.SaveChangesAsync(ct);
     }
@@ -237,6 +238,7 @@ public sealed class ApiKeyServiceTests
         public DbSet<Detection> Detections => Set<Detection>();
         public DbSet<ClassPrediction> Predictions => Set<ClassPrediction>();
         public DbSet<Picture> Pictures => Set<Picture>();
+        public DbSet<DetectionPicture> DetectionPictures => Set<DetectionPicture>();
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -244,6 +246,7 @@ public sealed class ApiKeyServiceTests
             builder.Entity<ApiKey>().Ignore(k => k.IsActive);
             builder.Entity<Detection>().OwnsOne(d => d.BoundingBox);
             builder.Entity<Detection>().HasMany(d => d.Predictions).WithOne().HasForeignKey(p => p.DetectionId);
+            builder.Entity<DetectionPicture>().HasKey(dp => new { dp.DetectionId, dp.PictureId });
             base.OnModelCreating(builder);
         }
     }

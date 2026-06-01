@@ -39,6 +39,9 @@ internal sealed class DetectionConfiguration : IEntityTypeConfiguration<Detectio
 
         builder.HasIndex(d => d.Row);
 
+        builder.HasIndex(d => new { d.PlantId, d.FrameId })
+            .IsUnique();
+
         builder.Navigation(d => d.Predictions).AutoInclude();
     }
 }
