@@ -79,7 +79,10 @@ public static class DependencyInjection
         services.AddScoped<ICurrentUserAccessor, CurrentUserAccessor>();
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer();
+            .AddJwtBearer()
+            .AddScheme<ApiKeyAuthenticationOptions, ApiKeyAuthenticationHandler>(
+                ApiKeyAuthorization.Scheme,
+                _ => { });
 
         services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
             .Configure<IOptions<JwtOptions>>((jwtBearerOpts, jwtOpts) =>
@@ -99,7 +102,15 @@ public static class DependencyInjection
                 };
             });
 
-        services.AddAuthorization();
+        services.AddAuthorization(opts =>
+        {
+            opts.AddPolicy(ApiKeyAuthorization.IngestPolicy, policy =>
+            {
+                policy.AuthenticationSchemes = new[] { ApiKeyAuthorization.Scheme };
+                policy.RequireAuthenticatedUser();
+                policy.RequireClaim(ApiKeyAuthorization.ScopeClaimType, ApiKeyAuthorization.IngestScope);
+            });
+        });
 
         services.AddOptions<StorageOptions>()
             .BindConfiguration(StorageOptions.SectionName)

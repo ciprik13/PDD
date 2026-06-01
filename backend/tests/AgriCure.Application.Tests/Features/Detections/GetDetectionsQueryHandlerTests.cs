@@ -109,6 +109,7 @@ public sealed class GetDetectionsQueryHandlerTests
         public bool IsAuthenticated => _userId is not null;
         public bool IsAdmin { get; }
         public bool IsAgriculture => !IsAdmin && _userId is not null;
+        public bool IsSystem => false;
         public Guid RequireUserId() => _userId ?? throw new InvalidOperationException("no user");
     }
 

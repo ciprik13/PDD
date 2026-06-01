@@ -15,6 +15,8 @@ public interface ICurrentUserAccessor
 
     bool IsAgriculture { get; }
 
+    bool IsSystem { get; }
+
     /// <summary>
     /// Returns <see cref="UserId"/> or throws <see cref="AuthenticationFailedException"/>
     /// if <see cref="UserId"/> is <c>null</c> (anonymous caller OR missing/invalid <c>sub</c> claim).

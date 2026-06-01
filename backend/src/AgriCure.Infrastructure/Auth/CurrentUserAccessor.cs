@@ -40,6 +40,9 @@ internal sealed class CurrentUserAccessor(IHttpContextAccessor httpContextAccess
     public bool IsAgriculture =>
         User?.IsInRole(ApplicationRole.Agriculture) == true;
 
+    public bool IsSystem =>
+        User?.IsInRole(ApplicationRole.System) == true;
+
     public Guid RequireUserId() =>
         UserId ?? throw new AuthenticationFailedException("Caller is not authenticated.");
 }
