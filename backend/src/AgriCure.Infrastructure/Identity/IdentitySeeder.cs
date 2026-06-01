@@ -26,6 +26,7 @@ public static class IdentitySeeder
                      ApplicationRole.Admin,
                      ApplicationRole.User,
                      ApplicationRole.Agriculture,
+                     ApplicationRole.System,
                  })
         {
             if (!await roleManager.RoleExistsAsync(roleName))
