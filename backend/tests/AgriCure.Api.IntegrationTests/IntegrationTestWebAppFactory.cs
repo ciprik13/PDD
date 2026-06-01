@@ -1,9 +1,6 @@
-using AgriCure.Api.IntegrationTests.TestSurfaces;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Testcontainers.PostgreSql;
 
 namespace AgriCure.Api.IntegrationTests;
@@ -36,12 +33,6 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
                 ["Storage:AccessKey"] = "minioadmin",
                 ["Storage:SecretKey"] = "minioadmin",
             });
-        });
-
-        builder.ConfigureTestServices(services =>
-        {
-            services.AddControllers()
-                .AddApplicationPart(typeof(ApiKeyProbeController).Assembly);
         });
     }
 }
