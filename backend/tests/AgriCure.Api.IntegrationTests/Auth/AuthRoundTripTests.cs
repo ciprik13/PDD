@@ -70,29 +70,29 @@ public class AuthRoundTripTests
     }
 
     [Fact]
-    public async Task Register_with_weak_password_returns_400()
+    public async Task Register_with_weak_password_returns_422()
     {
         var client = _factory.CreateClient();
 
         var resp = await client.PostAsJsonAsync("/api/auth/register",
             new { Email = "weakpw@example.com", Password = "short" });
 
-        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        resp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
 
     [Fact]
-    public async Task Register_with_invalid_email_format_returns_400()
+    public async Task Register_with_invalid_email_format_returns_422()
     {
         var client = _factory.CreateClient();
 
         var resp = await client.PostAsJsonAsync("/api/auth/register",
             new { Email = "not-an-email", Password = "P@ssw0rd!ABC" });
 
-        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        resp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
 
     [Fact]
-    public async Task Register_with_duplicate_email_returns_400()
+    public async Task Register_with_duplicate_email_returns_422()
     {
         var client = _factory.CreateClient();
         var email = $"dup-{Guid.NewGuid():N}@example.com";
@@ -104,7 +104,7 @@ public class AuthRoundTripTests
 
         var secondResp = await client.PostAsJsonAsync("/api/auth/register",
             new { Email = email, Password = password });
-        secondResp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        secondResp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
 
         var problem = await secondResp.Content.ReadFromJsonAsync<ValidationProblem>();
         problem.Should().NotBeNull();
@@ -152,14 +152,14 @@ public class AuthRoundTripTests
     }
 
     [Fact]
-    public async Task Register_with_empty_password_returns_400()
+    public async Task Register_with_empty_password_returns_422()
     {
         var client = _factory.CreateClient();
 
         var resp = await client.PostAsJsonAsync("/api/auth/register",
             new { Email = "empty-pw@example.com", Password = "" });
 
-        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        resp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
 
     private sealed record AuthResponse(

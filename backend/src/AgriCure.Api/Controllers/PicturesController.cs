@@ -21,13 +21,15 @@ public sealed class PicturesController(
     /// <summary>Upload a new image via multipart form. The backend stores it in MinIO and creates a Picture row.</summary>
     /// <param name="form">Multipart form with a required <c>file</c> field and optional <c>alt</c>/<c>title</c>.</param>
     /// <response code="201">Picture created; the response body contains the new Picture + its public URL.</response>
-    /// <response code="400">Validation error (missing file, disallowed mime type, oversize file, …).</response>
+    /// <response code="400">Missing or empty <c>file</c> field.</response>
     /// <response code="401">Caller is not authenticated.</response>
+    /// <response code="422">Semantic validation error (disallowed mime type, oversize file, …).</response>
     [HttpPost]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(PictureDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public Task<IActionResult> Upload(
         [FromForm] UploadPictureForm form,
@@ -57,14 +59,14 @@ public sealed class PicturesController(
 
     /// <summary>Register a path the external sync server already uploaded to the configured bucket.</summary>
     /// <response code="201">Picture registered; response body has the new Picture + URL.</response>
-    /// <response code="400">Validation error.</response>
     /// <response code="401">Caller is not authenticated.</response>
     /// <response code="404">No object exists at the supplied <c>virtualPath</c>.</response>
+    /// <response code="422">Validation error.</response>
     [HttpPost("register")]
     [ProducesResponseType(typeof(PictureDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public Task<IActionResult> Register(
         [FromBody] RegisterPictureCommand command,

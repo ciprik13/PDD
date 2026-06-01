@@ -47,7 +47,9 @@ public abstract class AppControllerBase : ControllerBase
                     ToCamelCase(failure.PropertyName),
                     failure.ErrorMessage);
             }
-            return ValidationProblem(modelState);
+            return ValidationProblem(
+                modelStateDictionary: modelState,
+                statusCode: StatusCodes.Status422UnprocessableEntity);
         }
         catch (AuthenticationFailedException ex)
         {

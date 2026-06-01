@@ -40,11 +40,11 @@ public class DetectionsCrudTests
     }
 
     [Fact]
-    public async Task Get_list_with_zero_limit_returns_400()
+    public async Task Get_list_with_zero_limit_returns_422()
     {
         var admin = await _factory.CreateAdminAsync();
         var resp = await admin.Client.GetAsync("/api/detections?limit=0");
-        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        resp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
 
     [Fact]
@@ -92,7 +92,7 @@ public class DetectionsCrudTests
     }
 
     [Fact]
-    public async Task Post_with_invalid_payload_returns_400()
+    public async Task Post_with_invalid_payload_returns_422()
     {
         var admin = await _factory.CreateAdminAsync();
         var resp = await admin.Client.PostAsJsonAsync("/api/detections", new
@@ -108,7 +108,7 @@ public class DetectionsCrudTests
             plantId = "",
             positionMeters = 5.0,
         });
-        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        resp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
 
     [Fact]

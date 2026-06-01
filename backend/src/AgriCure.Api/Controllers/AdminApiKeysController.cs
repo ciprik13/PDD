@@ -19,13 +19,11 @@ public sealed class AdminApiKeysController(
     /// <param name="command">Owner and human label.</param>
     /// <param name="cancellationToken"></param>
     /// <response code="201">Key created. The response body contains the plaintext key — the only time it is ever returned.</response>
-    /// <response code="400">Validation error (empty/invalid name).</response>
     /// <response code="401">Caller is not authenticated.</response>
     /// <response code="403">Caller lacks the admin role.</response>
-    /// <response code="422">Owner is not an existing agriculture user, or duplicate active name for the same owner.</response>
+    /// <response code="422">Validation error (empty/invalid name, owner not an existing agriculture user, or duplicate active name for the same owner).</response>
     [HttpPost]
     [ProducesResponseType(typeof(ApiKeyCreatedDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]

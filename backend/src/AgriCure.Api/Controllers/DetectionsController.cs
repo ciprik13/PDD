@@ -15,15 +15,15 @@ public sealed class DetectionsController(
     /// <summary>List recent detections, newest first. Requires `admin` or `agriculture` role.</summary>
     /// <param name="limit">Number of detections to return (1–200, default 20).</param>
     /// <response code="200">Detections array, newest first. Empty array if none.</response>
-    /// <response code="400">Validation error — `limit` must be greater than zero.</response>
     /// <response code="401">Caller is not authenticated.</response>
     /// <response code="403">Caller is authenticated but lacks the required role.</response>
+    /// <response code="422">Validation error — `limit` must be greater than zero.</response>
     [HttpGet]
     [Authorize(Roles = "admin,agriculture")]
     [ProducesResponseType(typeof(IReadOnlyList<DetectionDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public Task<IActionResult> GetAll(
         [FromQuery] int limit = 20,
@@ -54,15 +54,15 @@ public sealed class DetectionsController(
 
     /// <summary>Ingest a new detection. Auto-creates the referenced Plant if missing. Requires the `admin` role.</summary>
     /// <response code="201">Detection created. The `Location` header points to the new resource.</response>
-    /// <response code="400">Validation error.</response>
     /// <response code="401">Caller is not authenticated.</response>
     /// <response code="403">Caller is authenticated but lacks the admin role.</response>
+    /// <response code="422">Validation error.</response>
     [HttpPost]
     [Authorize(Roles = "admin")]
     [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public Task<IActionResult> Create(
         [FromBody] CreateDetectionCommand command,
@@ -75,10 +75,11 @@ public sealed class DetectionsController(
 
     /// <summary>Replace a detection's contents. PUT semantics — full replacement, not patch. Requires the `admin` role.</summary>
     /// <response code="204">Update succeeded.</response>
-    /// <response code="400">Validation error.</response>
+    /// <response code="400">Route/body id mismatch.</response>
     /// <response code="401">Caller is not authenticated.</response>
     /// <response code="403">Caller is authenticated but lacks the admin role.</response>
     /// <response code="404">No detection with that id.</response>
+    /// <response code="422">Semantic validation error (field constraints).</response>
     [HttpPut("{id:guid}")]
     [Authorize(Roles = "admin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -86,6 +87,7 @@ public sealed class DetectionsController(
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
     public Task<IActionResult> Update(
         Guid id,
