@@ -71,6 +71,17 @@ public abstract class AppControllerBase : ControllerBase
                 detail: ex.Message,
                 statusCode: StatusCodes.Status404NotFound);
         }
+        catch (ConflictException ex)
+        {
+            Logger.LogInformation(
+                "Conflict in {Controller}.{Action}: {Message}",
+                controllerName, actionName, ex.Message);
+
+            return Problem(
+                title: "Conflict.",
+                detail: ex.Message,
+                statusCode: StatusCodes.Status409Conflict);
+        }
         catch (UnprocessableEntityException ex)
         {
             Logger.LogInformation(
