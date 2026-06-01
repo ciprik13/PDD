@@ -78,7 +78,7 @@ internal sealed class ApiKeyService(
         var key = await db.ApiKeys
             .FirstOrDefaultAsync(k => k.Id == keyId, cancellationToken)
             .ConfigureAwait(false);
-        return key is null ? null : MapToDto(key);
+        return key?.ToDto();
     }
 
     public async Task<IReadOnlyList<ApiKeyDto>> ListAsync(
@@ -103,7 +103,7 @@ internal sealed class ApiKeyService(
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        return rows.Select(MapToDto).ToList();
+        return rows.Select(k => k.ToDto()).ToList();
     }
 
     public Task<ApiKey?> ResolveByTokenHashAsync(string tokenHash, CancellationToken cancellationToken = default) =>
@@ -132,18 +132,6 @@ internal sealed class ApiKeyService(
         key.LastUsedAt = now;
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
-
-    private static ApiKeyDto MapToDto(ApiKey key) =>
-        new(
-            key.Id,
-            key.OwnerUserId,
-            key.Name,
-            key.TokenLast4,
-            key.Scope,
-            key.CreatedAt,
-            key.LastUsedAt,
-            key.RevokedAt,
-            key.IsActive);
 
     internal static string GeneratePlaintextKey()
     {

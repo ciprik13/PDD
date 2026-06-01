@@ -2,7 +2,7 @@ using AgriCure.Domain.Identity;
 
 namespace AgriCure.Application.Features.ApiKeys.Common;
 
-internal static class ApiKeyMapper
+public static class ApiKeyMapper
 {
     public static ApiKeyDto ToDto(this ApiKey key) =>
         new(
