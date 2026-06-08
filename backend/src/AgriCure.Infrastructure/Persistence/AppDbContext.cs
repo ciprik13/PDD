@@ -2,6 +2,7 @@ using AgriCure.Application.Common.Interfaces;
 using AgriCure.Domain.Detections;
 using AgriCure.Domain.Identity;
 using AgriCure.Domain.Pictures;
+using AgriCure.Domain.Treatments;
 using AgriCure.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<DetectionPicture> DetectionPictures => Set<DetectionPicture>();
 
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+
+    public DbSet<Treatment> Treatments => Set<Treatment>();
+
+    public DbSet<AppliedTreatment> AppliedTreatments => Set<AppliedTreatment>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
