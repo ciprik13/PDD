@@ -2,8 +2,7 @@ import { type ReactNode } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
-  LayoutDashboard, Camera, FileText, Star,
-  TrendingUp, Plus, Home, Bell, Monitor, ClipboardList, LogOut,
+  LayoutDashboard, Camera, Star, Plus, Home, LogOut,
   Leaf, KeyRound,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -45,11 +44,8 @@ export function Sidebar() {
     {
       labelKey: 'sidebar.nav.groups.detection',
       items: [
-        { to: '/field-report', icon: <ClipboardList size={15} />, labelKey: 'sidebar.nav.items.fieldReport' },
-        { to: '/detections', icon: <FileText size={15} />, labelKey: 'sidebar.nav.items.detectionLog' },
         { to: '/plants', icon: <Leaf size={15} />, labelKey: 'sidebar.nav.items.plants' },
         { to: '/passport', icon: <Star size={15} />, labelKey: 'sidebar.nav.items.plantPassport' },
-        { to: '/trends', icon: <TrendingUp size={15} />, labelKey: 'sidebar.nav.items.severityTrends' },
       ],
     },
     {
@@ -62,8 +58,6 @@ export function Sidebar() {
     {
       labelKey: 'sidebar.nav.groups.system',
       items: [
-        { to: '/position', icon: <Monitor size={15} />, labelKey: 'sidebar.nav.items.standPosition' },
-        { to: '/alerts', icon: <Bell size={15} />, labelKey: 'sidebar.nav.items.notifications' },
         { to: '/admin/api-keys', icon: <KeyRound size={15} />, labelKey: 'sidebar.nav.items.apiKeys', adminOnly: true },
       ],
     },

@@ -153,6 +153,10 @@
     "actNow": "Act now",
     "bioFirst": "Bio-first",
     "chemical": "Chemical",
+    "apply": "Apply to plant",
+    "applying": "Applying…",
+    "applied": "Applied {{name}} to {{plant}}.",
+    "applyError": "Couldn't record the treatment. Pick a plant you own and try again.",
     "type": {
       "biological": "Bio-first",
       "chemical": "Chemical"
