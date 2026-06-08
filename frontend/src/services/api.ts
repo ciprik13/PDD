@@ -166,9 +166,17 @@ export const api = {
 
   // ── Admin: ingestion API keys ──────────────────────────
 
-  /** GET /api/admin/users?role=agriculture — pick an API-key owner */
+  /** GET /api/admin/users?role= — list users (omit role for all) */
   getUsers: (role?: string) =>
     apiFetch<User[]>(`/api/admin/users${role ? `?role=${encodeURIComponent(role)}` : ""}`),
+
+  /** POST /api/admin/users — create a user with the agriculture role */
+  createAgricultureUser: (data: { email: string; password: string }) =>
+    apiFetch<User>("/api/admin/users", { method: "POST", body: data }),
+
+  /** PUT /api/admin/users/:id/agriculture — grant/revoke the agriculture role */
+  setAgricultureRole: (userId: string, assigned: boolean) =>
+    apiFetch<void>(`/api/admin/users/${userId}/agriculture`, { method: "PUT", body: { assigned } }),
 
   /** GET /api/admin/api-keys */
   getApiKeys: (includeRevoked = false) =>

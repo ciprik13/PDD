@@ -10,6 +10,7 @@ import { PlantPassportPage } from "@/pages/PlantPassport";
 import { TreatmentsPage } from "@/pages/Treatments";
 import { TreatmentHistoryPage } from "@/pages/TreatmentHistory";
 import { AdminApiKeysPage } from "@/pages/AdminApiKeys";
+import { AdminUsersPage } from "@/pages/AdminUsers";
 import styles from "./App.module.css";
 
 function AppShell() {
@@ -24,6 +25,7 @@ function AppShell() {
           <Route path="/passport"   element={<PlantPassportPage />} />
           <Route path="/treatments" element={<TreatmentsPage />} />
           <Route path="/history"    element={<TreatmentHistoryPage />} />
+          <Route path="/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
           <Route path="/admin/api-keys" element={<AdminRoute><AdminApiKeysPage /></AdminRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

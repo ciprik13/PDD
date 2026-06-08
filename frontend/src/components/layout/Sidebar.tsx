@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, Camera, Star, Plus, Home, LogOut,
-  Leaf, KeyRound,
+  Leaf, KeyRound, Users,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import styles from './Sidebar.module.css';
@@ -58,6 +58,7 @@ export function Sidebar() {
     {
       labelKey: 'sidebar.nav.groups.system',
       items: [
+        { to: '/admin/users', icon: <Users size={15} />, labelKey: 'sidebar.nav.items.users', adminOnly: true },
         { to: '/admin/api-keys', icon: <KeyRound size={15} />, labelKey: 'sidebar.nav.items.apiKeys', adminOnly: true },
       ],
     },

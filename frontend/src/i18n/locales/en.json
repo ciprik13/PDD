@@ -20,6 +20,7 @@
         "treatmentHistory": "Treatment history",
         "standPosition": "Stand position",
         "notifications": "Notifications",
+        "users": "Users",
         "apiKeys": "API keys"
       }
     },
@@ -129,6 +130,22 @@
     "revoke": "Revoke",
     "lastUsed": "last used {{when}}",
     "neverUsed": "never used"
+  },
+  "users": {
+    "title": "Users",
+    "subtitle": "Create and manage field (agriculture) users",
+    "createTitle": "Add an agriculture user",
+    "createHint": "Creates a login already assigned the agriculture role — ready to own plants and receive ingestion keys.",
+    "email": "Email",
+    "password": "Password",
+    "createBtn": "Create user",
+    "createError": "Couldn't create the user. The email may already exist or the password is too weak (8+ chars, upper, lower, digit).",
+    "created": "Created {{email}}.",
+    "listTitle": "All users",
+    "empty": "No users yet.",
+    "noRoles": "no roles",
+    "grantAgri": "Make agriculture",
+    "revokeAgri": "Remove agriculture"
   },
   "detection": {
     "loading": "Loading…",
