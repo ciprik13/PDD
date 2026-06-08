@@ -213,6 +213,10 @@
     "title": "Plant Passport",
     "subtitle": "Health timeline — Plant #023 · Row 7"
   },
+  "passportApply": {
+    "title": "Apply a treatment",
+    "hint": "Record a treatment applied to {{plant}}. It will appear on the timeline above and in Treatment history."
+  },
   "recommendations": {
     "title": "Recommendations",
     "subtitle": "Bio-first treatment protocol",
