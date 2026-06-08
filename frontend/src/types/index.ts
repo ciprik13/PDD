@@ -20,6 +20,8 @@ export interface ProblemDetails {
 }
 
 // ── Camera & Position ────────────────────────────────────
+// Only fields the backend can derive from real detection data are populated.
+// GPS / height / speed / fps come from the live device and are null when absent.
 
 export interface GpsCoordinates {
   lat: number;
@@ -27,22 +29,25 @@ export interface GpsCoordinates {
 }
 
 export interface StandPosition {
-  gps: GpsCoordinates;
-  row: number;
-  totalRows: number;
-  positionMeters: number;
-  heightMeters: number;
-  speedMs: number;
+  gps: GpsCoordinates | null;
+  row: number | null;
+  totalRows: number | null;
+  positionMeters: number | null;
+  heightMeters: number | null;
+  speedMs: number | null;
 }
 
 export interface CameraFrame {
-  frameId: number;
-  timestamp: string;
-  resolution: string;
-  fps: number;
-  isRecording: boolean;
-  depthMeters: number;
+  frameId: number | null;
+  timestamp: string | null;
+  depthMeters: number | null;
   position: StandPosition;
+}
+
+/** Short-lived, single-use token for the MJPEG camera stream. */
+export interface StreamToken {
+  token: string;
+  expiresInSeconds: number;
 }
 
 // ── Detection ────────────────────────────────────────────
@@ -111,6 +116,19 @@ export interface UpdateDetectionRequest extends DetectionWriteBase {
   id: string;
 }
 
+// ── Plants ───────────────────────────────────────────────
+
+/** One plant with its latest disease status, from GET /api/plants. */
+export interface PlantSummary {
+  plantId: string;
+  row: number | null;
+  latestSeverity: DetectionSeverity | null;
+  latestLabel: string | null;
+  latestDiseaseClass: DiseaseClass | null;
+  lastSeenAt: string | null;
+  detectionCount: number;
+}
+
 // ── Plant Passport ───────────────────────────────────────
 
 export type PassportEventType = 'created' | 'healthy' | 'symptom' | 'disease' | 'treatment' | 'resolved';
@@ -145,6 +163,7 @@ export type TreatmentType = 'biological' | 'chemical';
 
 export interface Treatment {
   id: string;
+  diseaseClass: DiseaseClass;
   name: string;
   type: TreatmentType;
   rank: number; // 1 = bio-first
@@ -157,13 +176,26 @@ export interface Treatment {
   tags: string[];
 }
 
-// ── Environment ──────────────────────────────────────────
+/** A record that a treatment was applied to a plant, from GET /api/treatments/applied. */
+export interface AppliedTreatment {
+  id: string;
+  treatmentId: string;
+  treatmentName: string;
+  type: TreatmentType;
+  diseaseClass: DiseaseClass;
+  dosage: string;
+  phiDays: number;
+  plantId: string;
+  row: number;
+  appliedAt: string;
+  notes: string | null;
+}
 
-export interface EnvironmentReading {
-  timestamp: string;
-  temperatureC: number;
-  humidityPercent: number;
-  row?: number;
+export interface RecordAppliedTreatmentRequest {
+  treatmentId: string;
+  plantId: string;
+  appliedAt: string;
+  notes?: string | null;
 }
 
 // ── System ───────────────────────────────────────────────
@@ -175,8 +207,8 @@ export interface SystemStatus {
   cameraConnected: boolean;
   gpsActive: boolean;
   modelLoaded: boolean;
-  modelName: string;
-  syncedAt: string;
+  modelName: string | null;
+  syncedAt: string | null;
   pendingAlerts: number;
 }
 
@@ -189,4 +221,34 @@ export interface DashboardStats {
   rowsScanned: number;
   totalRows: number;
   plantsTracked: number;
+}
+
+// ── Admin: ingestion API keys ────────────────────────────
+
+export interface ApiKey {
+  id: string;
+  ownerUserId: string;
+  name: string;
+  tokenLast4: string;
+  scope: string;
+  createdAt: string;
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+  isActive: boolean;
+}
+
+/** Returned only at create time — the one time the plaintext key is visible. */
+export interface ApiKeyCreated {
+  id: string;
+  ownerUserId: string;
+  name: string;
+  plaintextKey: string;
+  tokenLast4: string;
+  scope: string;
+  createdAt: string;
+}
+
+export interface CreateApiKeyRequest {
+  ownerUserId: string;
+  name: string;
 }

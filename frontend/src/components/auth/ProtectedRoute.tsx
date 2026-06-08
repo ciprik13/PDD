@@ -2,11 +2,18 @@ import { type ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 
-const HAS_API = !!import.meta.env.VITE_API_BASE_URL;
-
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated, initializing } = useAuth();
-  if (HAS_API && initializing) return null;
-  if (HAS_API && !isAuthenticated) return <Navigate to="/login" replace />;
+  if (initializing) return null;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return <>{children}</>;
+}
+
+/** Like ProtectedRoute, but additionally requires the admin role. */
+export function AdminRoute({ children }: { children: ReactNode }) {
+  const { isAuthenticated, initializing, isAdmin } = useAuth();
+  if (initializing) return null;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!isAdmin) return <Navigate to="/" replace />;
   return <>{children}</>;
 }

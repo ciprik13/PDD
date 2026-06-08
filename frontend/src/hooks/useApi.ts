@@ -12,9 +12,10 @@ import type {
   CameraFrame,
   StandPosition,
   Detection,
+  PlantSummary,
   PlantPassport,
   Treatment,
-  EnvironmentReading,
+  AppliedTreatment,
 } from '@/types';
 
 // ── Generic polling hook ──────────────────────────────────
@@ -62,7 +63,7 @@ export const useDashboardStats = () =>
   usePolling<DashboardStats>(api.getDashboardStats, 30_000);
 
 export const useCameraFrame = () =>
-  usePolling<CameraFrame>(api.getCameraFrame, 1_000); // 1s — near real-time
+  usePolling<CameraFrame>(api.getCameraFrame, 2_000);
 
 export const useStandPosition = () =>
   usePolling<StandPosition>(api.getStandPosition, 2_000);
@@ -70,19 +71,32 @@ export const useStandPosition = () =>
 export const useDetections = (limit = 20) =>
   usePolling<Detection[]>(() => api.getDetections(limit), 5_000);
 
-export const useEnvironment = () =>
-  usePolling<EnvironmentReading>(api.getEnvironment, 15_000);
+export const usePlants = () =>
+  usePolling<PlantSummary[]>(api.getPlants, 15_000);
 
 export function usePassport(plantId: string | null) {
   return usePolling<PlantPassport>(
-    () => api.getPassport(plantId ?? ''),
+    () => {
+      if (!plantId) return Promise.reject(new Error('no plant selected'));
+      return api.getPassport(plantId);
+    },
     60_000
   );
 }
 
 export function useTreatments(diseaseClass: string | null) {
   return usePolling<Treatment[]>(
-    () => api.getTreatments(diseaseClass ?? ''),
+    () => {
+      if (!diseaseClass) return Promise.resolve([]);
+      return api.getTreatments(diseaseClass);
+    },
     300_000 // treatments don't change often
+  );
+}
+
+export function useAppliedTreatments(plantId?: string) {
+  return usePolling<AppliedTreatment[]>(
+    () => api.getAppliedTreatments(plantId),
+    60_000
   );
 }

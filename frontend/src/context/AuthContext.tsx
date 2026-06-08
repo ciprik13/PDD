@@ -10,9 +10,35 @@ import { authApi } from '@/services/auth';
 import { tokenStore, isAccessTokenExpired } from '@/services/api';
 import type { AuthResult } from '@/types';
 
+// The .NET JWT serializes role claims under the legacy WS schema URI; accept the
+// short forms too in case the token pipeline changes.
+const ROLE_CLAIMS = [
+  'http://schemas.microsoft.com/ws/2008/06/identity/claims/role',
+  'role',
+  'roles',
+];
+
+function rolesFromToken(): string[] {
+  const token = tokenStore.getAccess();
+  if (!token) return [];
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    for (const claim of ROLE_CLAIMS) {
+      const value = payload[claim];
+      if (Array.isArray(value)) return value.map(String);
+      if (typeof value === 'string') return [value];
+    }
+  } catch {
+    // malformed token — treat as no roles
+  }
+  return [];
+}
+
 interface AuthContextValue {
   isAuthenticated: boolean;
   initializing: boolean;
+  roles: string[];
+  isAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -24,12 +50,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(
     () => !isAccessTokenExpired()
   );
+  const [roles, setRoles] = useState<string[]>(() => rolesFromToken());
   const [initializing, setInitializing] = useState(
     () => isAccessTokenExpired() && !!tokenStore.getRefresh()
   );
 
   useEffect(() => {
-    const onLogout = () => setIsAuthenticated(false);
+    const onLogout = () => {
+      setIsAuthenticated(false);
+      setRoles([]);
+    };
     window.addEventListener('agricure:logout', onLogout);
     return () => window.removeEventListener('agricure:logout', onLogout);
   }, []);
@@ -47,10 +77,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .then((result) => {
         tokenStore.set(result.accessToken, result.refreshToken);
         setIsAuthenticated(true);
+        setRoles(rolesFromToken());
       })
       .catch(() => {
         tokenStore.clear();
         setIsAuthenticated(false);
+        setRoles([]);
       })
       .finally(() => setInitializing(false));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -58,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const persist = useCallback((result: AuthResult) => {
     tokenStore.set(result.accessToken, result.refreshToken);
     setIsAuthenticated(true);
+    setRoles(rolesFromToken());
   }, []);
 
   const login = useCallback(
@@ -79,10 +112,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (refresh) await authApi.logout(refresh).catch(() => {});
     tokenStore.clear();
     setIsAuthenticated(false);
+    setRoles([]);
   }, []);
 
+  const isAdmin = roles.includes('admin');
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, initializing, login, register, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, initializing, roles, isAdmin, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
