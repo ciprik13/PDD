@@ -1,44 +1,31 @@
 import { useTranslation } from 'react-i18next';
+import { formatDistanceToNow } from 'date-fns';
+import { ro, ru, enUS } from 'date-fns/locale';
+import { useDetections } from '@/hooks/useApi';
+import type { Detection } from '@/types';
 import styles from './shared.module.css';
 
-type AlertAction = 'actionRequired' | 'monitorClosely';
-type AlertDisease = 'lateBlight' | 'earlyBlight' | 'scanComplete';
-
-interface MockAlert {
-  id: number;
-  dot: string;
-  disease: AlertDisease;
-  row: number;
-  plant?: string;
-  confidence?: number;
-  leafArea?: number;
-  action?: AlertAction;
-  allHealthy?: true;
-  minsAgo: number;
-}
-
-const MOCK_ALERTS: MockAlert[] = [
-  { id: 1, dot: '#ef4444', disease: 'lateBlight',   row: 7, plant: 'P023', confidence: 94.2, leafArea: 18, action: 'actionRequired', minsAgo: 2 },
-  { id: 2, dot: '#f59e0b', disease: 'earlyBlight',  row: 4, plant: 'P011', confidence: 87.6, leafArea: 11, action: 'monitorClosely', minsAgo: 25 },
-  { id: 3, dot: 'var(--forest-3)', disease: 'scanComplete', row: 2, allHealthy: true, minsAgo: 55 },
-];
-
 export function AlertsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { data: detections, loading } = useDetections(50);
+  const locale = i18n.language === 'ro' ? ro : i18n.language === 'ru' ? ru : enUS;
 
-  function alertTitle(a: MockAlert) {
-    if (a.disease === 'scanComplete') {
-      return `${t('alerts.disease.scanComplete')} — ${t('alerts.scanRow', { row: a.row })}`;
-    }
-    return `${t(`alerts.disease.${a.disease}`)} — ${t('alerts.location', { row: a.row, plant: a.plant })}`;
+  // Alerts are the non-healthy detections, newest first.
+  const alerts = (detections ?? []).filter((d) => d.severity !== 'healthy');
+
+  function dot(d: Detection) {
+    return d.severity === 'critical' ? '#ef4444' : '#f59e0b';
   }
 
-  function alertDesc(a: MockAlert) {
-    if (a.allHealthy) return t('alerts.desc.allHealthy');
+  function title(d: Detection) {
+    return `${d.topPrediction.label} — ${t('alerts.location', { row: d.row, plant: d.plantId })}`;
+  }
+
+  function desc(d: Detection) {
     return t('alerts.desc.detected', {
-      confidence: a.confidence,
-      leafArea: a.leafArea,
-      action: t(`alerts.action.${a.action}`),
+      confidence: (d.topPrediction.confidence * 100).toFixed(1),
+      leafArea: Math.round(d.boundingBox.affectedAreaPercent),
+      action: t(d.severity === 'critical' ? 'alerts.action.actionRequired' : 'alerts.action.monitorClosely'),
     });
   }
 
@@ -52,13 +39,17 @@ export function AlertsPage() {
       </div>
 
       <div className={styles.card}>
-        {MOCK_ALERTS.map(a => (
-          <div key={a.id} className={styles.listItem}>
-            <div className={styles.listDot} style={{ background: a.dot }} />
+        {loading && <p className={styles.empty}>{t('common.loading')}</p>}
+        {!loading && alerts.length === 0 && <p className={styles.empty}>{t('alertsPage.empty')}</p>}
+        {alerts.map((d) => (
+          <div key={d.id} className={styles.listItem}>
+            <div className={styles.listDot} style={{ background: dot(d) }} />
             <div>
-              <div className={styles.listTitle}>{alertTitle(a)}</div>
-              <div className={styles.listDesc}>{alertDesc(a)}</div>
-              <div className={styles.listTime}>{t('alerts.time.minsAgo', { count: a.minsAgo })}</div>
+              <div className={styles.listTitle}>{title(d)}</div>
+              <div className={styles.listDesc}>{desc(d)}</div>
+              <div className={styles.listTime}>
+                {formatDistanceToNow(new Date(d.timestamp), { addSuffix: true, locale })}
+              </div>
             </div>
           </div>
         ))}

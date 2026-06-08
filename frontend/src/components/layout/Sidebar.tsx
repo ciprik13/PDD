@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   LayoutDashboard, Camera, FileText, Star,
   TrendingUp, Plus, Home, Bell, Monitor, ClipboardList, LogOut,
+  Leaf, KeyRound,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import styles from './Sidebar.module.css';
@@ -14,6 +15,7 @@ interface NavItem {
   labelKey: string;
   badge?: number;
   live?: boolean;
+  adminOnly?: boolean;
 }
 
 const LANGUAGES = [
@@ -24,7 +26,7 @@ const LANGUAGES = [
 
 export function Sidebar() {
   const { t, i18n } = useTranslation();
-  const { logout } = useAuth();
+  const { logout, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -44,7 +46,8 @@ export function Sidebar() {
       labelKey: 'sidebar.nav.groups.detection',
       items: [
         { to: '/field-report', icon: <ClipboardList size={15} />, labelKey: 'sidebar.nav.items.fieldReport' },
-        { to: '/detections', icon: <FileText size={15} />, labelKey: 'sidebar.nav.items.detectionLog', badge: 3 },
+        { to: '/detections', icon: <FileText size={15} />, labelKey: 'sidebar.nav.items.detectionLog' },
+        { to: '/plants', icon: <Leaf size={15} />, labelKey: 'sidebar.nav.items.plants' },
         { to: '/passport', icon: <Star size={15} />, labelKey: 'sidebar.nav.items.plantPassport' },
         { to: '/trends', icon: <TrendingUp size={15} />, labelKey: 'sidebar.nav.items.severityTrends' },
       ],
@@ -60,10 +63,15 @@ export function Sidebar() {
       labelKey: 'sidebar.nav.groups.system',
       items: [
         { to: '/position', icon: <Monitor size={15} />, labelKey: 'sidebar.nav.items.standPosition' },
-        { to: '/alerts', icon: <Bell size={15} />, labelKey: 'sidebar.nav.items.notifications', badge: 2 },
+        { to: '/alerts', icon: <Bell size={15} />, labelKey: 'sidebar.nav.items.notifications' },
+        { to: '/admin/api-keys', icon: <KeyRound size={15} />, labelKey: 'sidebar.nav.items.apiKeys', adminOnly: true },
       ],
     },
   ];
+
+  const visibleGroups = navGroups
+    .map((group) => ({ ...group, items: group.items.filter((i) => !i.adminOnly || isAdmin) }))
+    .filter((group) => group.items.length > 0);
 
   const changeLanguage = (code: string) => {
     i18n.changeLanguage(code);
@@ -83,7 +91,7 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className={styles.nav}>
-        {navGroups.map((group) => (
+        {visibleGroups.map((group) => (
           <div key={group.labelKey} className={styles.navGroup}>
             <div className={styles.groupLabel}>{t(group.labelKey)}</div>
             {group.items.map((item) => (

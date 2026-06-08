@@ -1,18 +1,77 @@
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardHeader, Chip } from '@/components/shared/UI';
-import { useCameraFrame, useDetections, useEnvironment } from '@/hooks/useApi';
+import { useCameraFrame, useDetections } from '@/hooks/useApi';
+import { api, API_BASE, tokenStore } from '@/services/api';
 import styles from './CameraPanel.module.css';
 
 export function CameraPanel() {
   const { t } = useTranslation();
   const { data: frame } = useCameraFrame();
   const { data: detections } = useDetections(1);
-  const { data: env } = useEnvironment();
+
+  const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  const [streamError, setStreamError] = useState(false);
+  const [liveGps, setLiveGps] = useState<{ lat: number; lon: number } | null>(null);
+  const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // ── MJPEG stream: fetch a single-use token, build the URL, refresh before expiry ──
+  useEffect(() => {
+    let cancelled = false;
+
+    const refreshStream = () => {
+      api.getCameraStreamToken()
+        .then(({ token, expiresInSeconds }) => {
+          if (cancelled) return;
+          setStreamUrl(api.cameraStreamUrl(token));
+          setStreamError(false);
+          // refresh a few seconds before the token expires
+          refreshTimer.current = setTimeout(refreshStream, Math.max(5, expiresInSeconds - 5) * 1000);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setStreamError(true);
+          refreshTimer.current = setTimeout(refreshStream, 5_000);
+        });
+    };
+
+    refreshStream();
+    return () => {
+      cancelled = true;
+      if (refreshTimer.current) clearTimeout(refreshTimer.current);
+    };
+  }, []);
+
+  // ── Live GPS proxied from the Jetson (best-effort; ignored when offline) ──
+  useEffect(() => {
+    let active = true;
+    const fetchGps = async () => {
+      try {
+        const token = tokenStore.getAccess();
+        const res = await fetch(`${API_BASE}/api/camera/gps`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (active && data?.fix && typeof data.lat === 'number' && typeof data.lon === 'number') {
+          setLiveGps({ lat: data.lat, lon: data.lon });
+        }
+      } catch {
+        /* device offline — keep last value */
+      }
+    };
+    fetchGps();
+    const id = setInterval(fetchGps, 3_000);
+    return () => { active = false; clearInterval(id); };
+  }, []);
 
   const latest = detections?.[0] ?? null;
   const hasDisease = latest?.severity === 'critical' || latest?.severity === 'warning';
   const pos = frame?.position;
-  const diseaseCount = detections?.filter(d => d.severity !== 'healthy').length ?? 1;
+  const diseaseCount = detections?.filter((d) => d.severity !== 'healthy').length ?? 0;
+
+  const lat = liveGps?.lat ?? pos?.gps?.lat ?? null;
+  const lon = liveGps?.lon ?? pos?.gps?.lon ?? null;
 
   return (
     <div className={styles.wrapper}>
@@ -28,13 +87,27 @@ export function CameraPanel() {
           right={<Chip label={hasDisease ? t('camera.diseaseFound') : t('camera.allClear')} variant={hasDisease ? 'red' : 'green'} />}
         />
 
-        {/* Camera preview */}
         <div className={styles.camBox}>
           <div className={styles.camFoliage} />
 
-          {/* TODO: Replace with actual MJPEG/WebRTC stream:
-              <img src={`${import.meta.env.VITE_API_BASE_URL}/api/camera/stream`} className={styles.camStream} alt="Live camera" />
-          */}
+          {streamError && (
+            <div style={{
+              position: 'absolute', inset: 0, display: 'flex',
+              alignItems: 'center', justifyContent: 'center',
+              color: '#f87171', fontSize: 14, zIndex: 2,
+            }}>
+              {t('camera.offline')}
+            </div>
+          )}
+
+          {streamUrl && !streamError && (
+            <img
+              src={streamUrl}
+              className={styles.camStream}
+              alt={t('camera.title')}
+              onError={() => setStreamError(true)}
+            />
+          )}
 
           {/* Bounding box overlay */}
           {hasDisease && latest && (
@@ -57,18 +130,13 @@ export function CameraPanel() {
           {/* HUD overlay */}
           <div className={styles.hud}>
             <div className={styles.hudTop}>
-              <span className={styles.hudChip}>
-                ZED 2 · {frame?.resolution ?? '1080p'} · {frame?.fps ?? 30}fps · {t('camera.stereo')}
-              </span>
-              {frame?.isRecording && (
-                <span className={styles.recChip}>
-                  <span className={styles.recDot} />REC
-                </span>
-              )}
+              <span className={styles.hudChip}>ZED 2 · {t('camera.stereo')}</span>
             </div>
             <div className={styles.hudBottom}>
               <span className={styles.hudGps}>
-                {pos?.gps.lat.toFixed(4)}°N {pos?.gps.lon.toFixed(4)}°E · {t('camera.hudRow', { row: pos?.row })} · {pos?.positionMeters?.toFixed(1)}m
+                {lat != null ? `${lat.toFixed(4)}°N ` : '— '}
+                {lon != null ? `${lon.toFixed(4)}°E · ` : '— · '}
+                {t('camera.hudRow', { row: pos?.row ?? '—' })} · {pos?.positionMeters?.toFixed(1) ?? '—'}m
               </span>
               {hasDisease && (
                 <span className={styles.hudFound}>
@@ -80,14 +148,14 @@ export function CameraPanel() {
           </div>
         </div>
 
-        {/* GPS / position strip */}
+        {/* Position strip */}
         <div className={styles.posGrid}>
           <div className={styles.posItem}>
-            <div className={styles.posVal}>{pos?.gps.lat.toFixed(4) ?? '—'}°N</div>
+            <div className={styles.posVal}>{lat != null ? `${lat.toFixed(4)}°N` : '—'}</div>
             <div className={styles.posLbl}>{t('camera.latitude')}</div>
           </div>
           <div className={styles.posItem}>
-            <div className={styles.posVal}>{pos?.gps.lon.toFixed(4) ?? '—'}°E</div>
+            <div className={styles.posVal}>{lon != null ? `${lon.toFixed(4)}°E` : '—'}</div>
             <div className={styles.posLbl}>{t('camera.longitude')}</div>
           </div>
           <div className={styles.posItem}>
@@ -101,7 +169,6 @@ export function CameraPanel() {
       <Card>
         <CardHeader title={t('camera.modelTitle')} right={<Chip label={t('camera.modelOutput')} />} />
 
-        {/* Class probabilities */}
         <div className={styles.predictions}>
           {(latest?.allPredictions ?? []).map((p) => (
             <div key={p.diseaseClass} className={styles.predRow}>
@@ -127,50 +194,32 @@ export function CameraPanel() {
               </div>
             </div>
           ))}
+          {!latest && <p style={{ color: 'var(--txt-3)', fontSize: 13 }}>{t('camera.noModelOutput')}</p>}
         </div>
 
-        {/* Details table */}
-        <div className={styles.detailTable}>
-          <div className={styles.dtRow}>
-            <span className={styles.dtLabel}>{t('camera.boundingBoxes')}</span>
-            <span className={styles.dtVal}>{t('camera.detected', { count: latest ? 1 : 0 })}</span>
-          </div>
-          <div className={styles.dtRow}>
-            <span className={styles.dtLabel}>{t('camera.depth')}</span>
-            <span className={styles.dtVal}>{t('camera.depthVal', { val: latest?.boundingBox.depthMeters.toFixed(2) ?? '—' })}</span>
-          </div>
-          <div className={styles.dtRow}>
-            <span className={styles.dtLabel}>{t('camera.leafArea')}</span>
-            <span className={styles.dtVal}>{t('camera.leafAreaVal', { val: latest?.boundingBox.affectedAreaPercent ?? 0 })}</span>
-          </div>
-          <div className={styles.dtRow}>
-            <span className={styles.dtLabel}>{t('camera.confidenceGate')}</span>
-            <span className={styles.dtVal} style={{ color: 'var(--forest)' }}>
-              {latest?.confidenceGatePassed ? t('camera.pass') : t('camera.fail')}
-            </span>
-          </div>
-          <div className={styles.dtRow}>
-            <span className={styles.dtLabel}>{t('camera.inferenceTime')}</span>
-            <span className={styles.dtVal}>{t('camera.inferenceVal', { val: latest?.inferenceMs ?? '—' })}</span>
-          </div>
-        </div>
-
-        {/* Environment */}
-        {env && (
-          <div className={styles.envRow}>
-            <div className={styles.envItem}>
-              <div className={styles.envVal}>{env.temperatureC.toFixed(1)}°C</div>
-              <div className={styles.envLbl}>{t('camera.temperature')}</div>
-              <div className={styles.envBar}>
-                <div className={styles.envFill} style={{ width: `${(env.temperatureC / 40) * 100}%` }} />
-              </div>
+        {latest && (
+          <div className={styles.detailTable}>
+            <div className={styles.dtRow}>
+              <span className={styles.dtLabel}>{t('camera.boundingBoxes')}</span>
+              <span className={styles.dtVal}>{t('camera.detected', { count: 1 })}</span>
             </div>
-            <div className={styles.envItem}>
-              <div className={styles.envVal}>{env.humidityPercent.toFixed(0)}%</div>
-              <div className={styles.envLbl}>{t('camera.humidity')}</div>
-              <div className={styles.envBar}>
-                <div className={styles.envFill} style={{ width: `${env.humidityPercent}%` }} />
-              </div>
+            <div className={styles.dtRow}>
+              <span className={styles.dtLabel}>{t('camera.depth')}</span>
+              <span className={styles.dtVal}>{t('camera.depthVal', { val: latest.boundingBox.depthMeters.toFixed(2) })}</span>
+            </div>
+            <div className={styles.dtRow}>
+              <span className={styles.dtLabel}>{t('camera.leafArea')}</span>
+              <span className={styles.dtVal}>{t('camera.leafAreaVal', { val: latest.boundingBox.affectedAreaPercent })}</span>
+            </div>
+            <div className={styles.dtRow}>
+              <span className={styles.dtLabel}>{t('camera.confidenceGate')}</span>
+              <span className={styles.dtVal} style={{ color: 'var(--forest)' }}>
+                {latest.confidenceGatePassed ? t('camera.pass') : t('camera.fail')}
+              </span>
+            </div>
+            <div className={styles.dtRow}>
+              <span className={styles.dtLabel}>{t('camera.inferenceTime')}</span>
+              <span className={styles.dtVal}>{t('camera.inferenceVal', { val: latest.inferenceMs })}</span>
             </div>
           </div>
         )}

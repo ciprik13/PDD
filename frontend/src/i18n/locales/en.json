@@ -13,12 +13,14 @@
         "liveCamera": "Live camera",
         "fieldReport": "Field report",
         "detectionLog": "Detection log",
+        "plants": "Plants",
         "plantPassport": "Plant passport",
         "severityTrends": "Severity trends",
         "recommendations": "Recommendations",
         "treatmentHistory": "Treatment history",
         "standPosition": "Stand position",
-        "notifications": "Notifications"
+        "notifications": "Notifications",
+        "apiKeys": "API keys"
       }
     },
     "device": {
@@ -79,7 +81,53 @@
     "disease_one": "{{count}} disease detected",
     "disease_other": "{{count}} diseases detected",
     "stereo": "stereo",
-    "hudRow": "Row {{row}}"
+    "hudRow": "Row {{row}}",
+    "offline": "Camera offline",
+    "noModelOutput": "No detections yet."
+  },
+  "common": {
+    "loading": "Loading…",
+    "loadError": "Couldn't load data. Please try again."
+  },
+  "plants": {
+    "title": "Plants",
+    "subtitle": "All tracked plants and their latest status",
+    "empty": "No plants tracked yet. Plants appear here once detections arrive.",
+    "noScans": "No scans",
+    "rowShort": "Row {{row}}",
+    "detectionCount_one": "{{count}} detection",
+    "detectionCount_other": "{{count}} detections"
+  },
+  "disease": {
+    "late_blight": "Late blight",
+    "early_blight": "Early blight",
+    "fusarium_wilt": "Fusarium wilt",
+    "powdery_mildew": "Powdery mildew",
+    "bacterial_spot": "Bacterial spot",
+    "leaf_mold": "Leaf mold",
+    "septoria_leaf_spot": "Septoria leaf spot",
+    "spider_mites": "Spider mites",
+    "healthy": "Healthy"
+  },
+  "apiKeys": {
+    "title": "Ingestion API keys",
+    "subtitle": "Issue and revoke keys used by edge devices to push detections",
+    "createTitle": "Generate a new key",
+    "createHint": "Keys authenticate the sync server's detection ingest. The owner must be an existing agriculture user.",
+    "ownerLabel": "Owner user id (agriculture)",
+    "nameLabel": "Key name",
+    "createBtn": "Generate key",
+    "createError": "Couldn't create the key. Check the owner id and name.",
+    "createdTitle": "Key created",
+    "createdHint": "Copy this key now — it is shown only once and cannot be retrieved later.",
+    "copy": "Copy key",
+    "listTitle": "Existing keys",
+    "empty": "No API keys yet.",
+    "active": "active",
+    "revoked": "revoked",
+    "revoke": "Revoke",
+    "lastUsed": "last used {{when}}",
+    "neverUsed": "never used"
   },
   "detection": {
     "loading": "Loading…",
@@ -163,7 +211,8 @@
   },
   "recommendations": {
     "title": "Recommendations",
-    "subtitle": "Bio-first treatment protocol — Late blight"
+    "subtitle": "Bio-first treatment protocol",
+    "empty": "No treatments listed for this disease yet."
   },
   "severityTrends": {
     "title": "Severity Trends",
@@ -176,7 +225,8 @@
     "criticalLabel": "Critical",
     "warningLabel": "Warning",
     "healthyLabel": "Healthy",
-    "detections": "detections"
+    "detections": "detections",
+    "empty": "No detections yet to chart."
   },
   "standPosition": {
     "title": "Stand Position",
@@ -187,15 +237,18 @@
     "rowUnit": "of total",
     "pos": "Position",
     "height": "Height",
-    "speed": "Speed"
+    "speed": "Speed",
+    "empty": "No position telemetry yet."
   },
   "alertsPage": {
     "title": "Notifications",
-    "subtitle": "2 unread alerts"
+    "subtitle": "Active disease alerts",
+    "empty": "No active alerts — all recent scans are healthy."
   },
   "treatmentHistory": {
     "title": "Treatment History",
-    "subtitle": "Greenhouse A — Applied treatments"
+    "subtitle": "Applied treatments",
+    "empty": "No treatments have been applied yet."
   },
   "detectionLog": {
     "title": "Detection Log",
@@ -268,6 +321,7 @@
   "history": {
     "applied": "Applied to Row {{row}}, Plants #{{from}}–#{{to}} · {{type}}",
     "appliedFullRow": "Applied to Row {{row}}, full row · {{type}}",
+    "appliedPlant": "Applied to plant {{plant}} (Row {{row}}) · {{type}}",
     "phiDays": "PHI {{days}} days",
     "type": {
       "biological": "biological",

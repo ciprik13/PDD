@@ -2,16 +2,23 @@ import { useTranslation } from 'react-i18next';
 import { FileDown, Map } from 'lucide-react';
 import { DetectionList, PassportTimeline } from '@/components/detection/DetectionList';
 import { TreatmentPanel } from '@/components/treatment/TreatmentPanel';
-import { useDashboardStats, useDetections } from '@/hooks/useApi';
-import { MOCK_PASSPORT, MOCK_TREATMENTS } from '@/services/api';
+import { useDashboardStats, useDetections, useTreatments, usePassport } from '@/hooks/useApi';
 import styles from './FieldReport.module.css';
+import shared from './shared.module.css';
 
 export function FieldReportPage() {
   const { t, i18n } = useTranslation();
   const { data: stats } = useDashboardStats();
-  const { data: detections } = useDetections(1);
+  const { data: detections } = useDetections(20);
+
   const criticalCount = detections?.filter(d => d.severity === 'critical').length ?? 0;
   const warningCount = detections?.filter(d => d.severity === 'warning').length ?? 0;
+
+  // Focus the report on the most recent diseased plant (falls back to the latest detection).
+  const focus = detections?.find(d => d.severity !== 'healthy') ?? detections?.[0] ?? null;
+  const { data: treatments } = useTreatments(
+    focus && focus.severity !== 'healthy' ? focus.topPrediction.diseaseClass : null);
+  const { data: passport } = usePassport(focus?.plantId ?? null);
 
   return (
     <div className={styles.page}>
@@ -63,12 +70,16 @@ export function FieldReportPage() {
       {/* Main grid: detection log + treatment */}
       <div className={styles.mainGrid}>
         <DetectionList />
-        <TreatmentPanel treatments={MOCK_TREATMENTS} diseaseName={t('alerts.disease.lateBlight')} />
+        {treatments && treatments.length > 0 && focus
+          ? <TreatmentPanel treatments={treatments} diseaseName={t(`disease.${focus.topPrediction.diseaseClass}`)} />
+          : <div className={shared.card}><p className={shared.empty}>{t('recommendations.empty')}</p></div>}
       </div>
 
       {/* Bottom grid: passport + zone map */}
       <div className={styles.bottomGrid}>
-        <PassportTimeline passport={MOCK_PASSPORT} />
+        {passport
+          ? <PassportTimeline passport={passport} />
+          : <div className={shared.card}><p className={shared.empty}>{t('plants.empty')}</p></div>}
         <div className={styles.futureMap}>
           <div className={styles.futureMapIcon}>
             <Map size={22} />
