@@ -6,9 +6,14 @@ import styles from './TreatmentPanel.module.css';
 interface TreatmentPanelProps {
   treatments: Treatment[];
   diseaseName?: string;
+  /** When provided, each treatment card shows an "Apply" button. */
+  onApply?: (treatment: Treatment) => void;
+  /** Disables the Apply buttons (e.g. while a request is in flight or no plant is selected). */
+  applyDisabled?: boolean;
+  applyingId?: string | null;
 }
 
-export function TreatmentPanel({ treatments, diseaseName }: TreatmentPanelProps) {
+export function TreatmentPanel({ treatments, diseaseName, onApply, applyDisabled, applyingId }: TreatmentPanelProps) {
   const { t } = useTranslation();
   return (
     <Card>
@@ -18,15 +23,31 @@ export function TreatmentPanel({ treatments, diseaseName }: TreatmentPanelProps)
         right={<Chip label={t('treatment.actNow')} variant="amber" />}
       />
       <div className={styles.list}>
-        {treatments.map((t) => (
-          <TreatmentCard key={t.id} treatment={t} />
+        {treatments.map((tr) => (
+          <TreatmentCard
+            key={tr.id}
+            treatment={tr}
+            onApply={onApply}
+            applyDisabled={applyDisabled}
+            applying={applyingId === tr.id}
+          />
         ))}
       </div>
     </Card>
   );
 }
 
-function TreatmentCard({ treatment: tr }: { treatment: Treatment }) {
+function TreatmentCard({
+  treatment: tr,
+  onApply,
+  applyDisabled,
+  applying,
+}: {
+  treatment: Treatment;
+  onApply?: (treatment: Treatment) => void;
+  applyDisabled?: boolean;
+  applying?: boolean;
+}) {
   const { t } = useTranslation();
   const isBio = tr.type === 'biological';
 
@@ -60,6 +81,26 @@ function TreatmentCard({ treatment: tr }: { treatment: Treatment }) {
           </span>
         ))}
       </div>
+      {onApply && (
+        <button
+          type="button"
+          disabled={applyDisabled || applying}
+          onClick={() => onApply(tr)}
+          style={{
+            marginTop: 10,
+            fontSize: 12,
+            fontWeight: 700,
+            color: '#fff',
+            background: applyDisabled || applying ? '#9ca3af' : 'var(--forest)',
+            border: 'none',
+            borderRadius: 999,
+            padding: '7px 14px',
+            cursor: applyDisabled || applying ? 'not-allowed' : 'pointer',
+          }}
+        >
+          {applying ? t('treatment.applying') : t('treatment.apply')}
+        </button>
+      )}
     </div>
   );
 }
