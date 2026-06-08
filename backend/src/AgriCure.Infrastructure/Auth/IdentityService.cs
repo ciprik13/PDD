@@ -69,6 +69,25 @@ internal sealed class IdentityService(UserManager<ApplicationUser> userManager) 
         return await userManager.IsInRoleAsync(user, roleName);
     }
 
+    public async Task<IReadOnlyList<IdentityUserContext>> ListUsersAsync(
+        string? roleName, CancellationToken cancellationToken)
+    {
+        var users = string.IsNullOrWhiteSpace(roleName)
+            ? userManager.Users.ToList()
+            : (await userManager.GetUsersInRoleAsync(roleName)).ToList();
+
+        var result = new List<IdentityUserContext>(users.Count);
+        foreach (var user in users)
+        {
+            var roles = (await userManager.GetRolesAsync(user)).ToArray();
+            result.Add(new IdentityUserContext(user.Id, user.Email ?? string.Empty, roles));
+        }
+
+        return result
+            .OrderBy(u => u.Email, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
     private static IdentityErrorInfo ToInfo(IdentityError error) =>
         new(error.Code, error.Description);
 }

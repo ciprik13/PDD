@@ -12,6 +12,13 @@ public interface IIdentityService
         Guid userId, CancellationToken cancellationToken);
 
     Task<bool> UserHasRoleAsync(Guid userId, string roleName, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Lists users, optionally filtered to a single role. Used by the admin surface to
+    /// pick an API-key owner without typing a raw user id.
+    /// </summary>
+    Task<IReadOnlyList<IdentityUserContext>> ListUsersAsync(
+        string? roleName, CancellationToken cancellationToken);
 }
 
 public sealed record IdentityErrorInfo(string Code, string Description);
