@@ -75,43 +75,31 @@
 .statBlock {
   background: var(--white);
   border: 1px solid var(--br);
-  border-radius: var(--r-20);
+  border-radius: var(--r-16);
   padding: 20px 22px 18px;
   box-shadow: var(--shadow-sm);
   position: relative;
   overflow: hidden;
-  transition: box-shadow 0.15s, transform 0.15s;
+  transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
 }
 
 .statBlock:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  border-color: var(--br-2);
 }
 
-/* Top accent bar with leaf-edge curve */
+/* A single quiet left rule in the stat's accent — calmer than a full top bar + blob. */
 .statBlock::before {
   content: '';
   position: absolute;
-  top: 0;
+  top: 16px;
+  bottom: 16px;
   left: 0;
-  right: 0;
-  height: 3px;
+  width: 3px;
   background: var(--stat-accent, var(--forest-3));
-  border-radius: 20px 20px 0 0;
-}
-
-/* Organic watermark circle — like a botanical spore */
-.statBlock::after {
-  content: '';
-  position: absolute;
-  bottom: -18px;
-  right: -18px;
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: radial-gradient(circle at center, var(--stat-accent, var(--forest-5)) 0%, transparent 70%);
-  opacity: 0.18;
-  pointer-events: none;
+  border-radius: 0 3px 3px 0;
+  opacity: 0.9;
 }
 
 .statTop {

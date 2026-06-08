@@ -3,7 +3,7 @@
    Organic Biophilic + Friendly SaaS — UI/UX Pro Max System
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Lora:ital,wght@0,400;0,600;0,700;1,400;1,600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap');
 
 /* ── Design Tokens ─────────────────────────────────────── */
 :root {
@@ -17,8 +17,8 @@
   --mist:        #e8f5ee;
   --mist-2:      #ceeadb;
 
-  /* Surfaces */
-  --cream:       #f5fbf7;
+  /* Surfaces — warm sage paper so white cards lift off the page */
+  --cream:       #eef3ec;
   --white:       #ffffff;
   --card:        #ffffff;
 
@@ -45,8 +45,8 @@
   --blue-bg:     #dbeafe;
 
   /* Typography */
-  --font-sans:   'Plus Jakarta Sans', sans-serif;
-  --font-serif:  'Lora', Georgia, serif;
+  --font-sans:   'Schibsted Grotesk', -apple-system, system-ui, sans-serif;
+  --font-serif:  'Fraunces', Georgia, serif;
 
   /* Radii */
   --r-8:   8px;
@@ -56,10 +56,10 @@
   --r-24:  24px;
   --r-pill: 999px;
 
-  /* Shadows */
-  --shadow-sm:  0 1px 3px rgba(13, 35, 24, 0.07), 0 0 0 1px rgba(13, 35, 24, 0.04);
-  --shadow-md:  0 4px 14px rgba(13, 35, 24, 0.10), 0 0 0 1px rgba(13, 35, 24, 0.04);
-  --shadow-lg:  0 8px 28px rgba(13, 35, 24, 0.13);
+  /* Shadows — soft, layered, low-opacity (Scandinavian depth) */
+  --shadow-sm:  0 1px 2px rgba(13, 35, 24, 0.04), 0 2px 6px -2px rgba(13, 35, 24, 0.06);
+  --shadow-md:  0 8px 24px -8px rgba(13, 35, 24, 0.14);
+  --shadow-lg:  0 20px 44px -16px rgba(13, 35, 24, 0.20);
 }
 
 /* ── Reset ─────────────────────────────────────────────── */

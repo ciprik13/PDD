@@ -13,11 +13,12 @@
 
 .pageHead {
   font-family: var(--font-serif);
-  font-size: 28px;
+  font-size: 30px;
   font-weight: 600;
   color: var(--forest-dark);
-  letter-spacing: -0.3px;
-  line-height: 1.1;
+  letter-spacing: -0.5px;
+  line-height: 1.05;
+  font-optical-sizing: auto;
 }
 
 .pageSub {

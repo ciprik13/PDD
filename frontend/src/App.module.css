@@ -10,10 +10,11 @@
   overflow-y: auto;
   min-height: 100vh;
   background-color: var(--cream);
+  /* Quiet atmosphere: a soft top-light wash, no busy doodles. */
   background-image:
-    url("data:image/svg+xml,%3Csvg width='90' height='90' viewBox='0 0 90 90' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M45 10C32 10 22 24 22 38c0 11 6 20 16 25V56c0-10 5-16 10-20C45 23 45 12 45 10z' fill='none' stroke='%231e5c3a' stroke-width='0.7' opacity='0.07'/%3E%3Cpath d='M70 55C62 55 56 63 56 70c0 6 3 11 9 14V80c0-6 3-9 6-11C70 62 70 57 70 55z' fill='none' stroke='%231e5c3a' stroke-width='0.5' opacity='0.05'/%3E%3C/svg%3E"),
-    radial-gradient(ellipse at 5% 10%, rgba(69, 168, 118, 0.05) 0%, transparent 45%),
-    radial-gradient(ellipse at 95% 90%, rgba(30, 92, 58, 0.04) 0%, transparent 40%);
+    radial-gradient(120% 60% at 50% -10%, rgba(255, 255, 255, 0.85) 0%, transparent 60%),
+    radial-gradient(ellipse at 100% 0%, rgba(69, 168, 118, 0.06) 0%, transparent 42%);
+  background-attachment: fixed;
 }
 
 .placeholder {
