@@ -65,6 +65,10 @@ services:
       Storage__UseSsl: ${STORAGE_USE_SSL:-false}
       Storage__PublicBaseUrl: ${STORAGE_PUBLIC_BASE_URL:-}
       Storage__DefaultBucket: ${STORAGE_DEFAULT_BUCKET:-agricure-frames}
+      # Live camera proxy: Jetson reachable over the private mesh (Tailscale).
+      # Not secret — internal hostnames. Blank = camera shows an offline state.
+      Jetson__StreamUrl: ${JETSON_STREAM_URL:-}
+      Jetson__BaseUrl: ${JETSON_BASE_URL:-}
     networks:
       - agricure
     restart: unless-stopped
