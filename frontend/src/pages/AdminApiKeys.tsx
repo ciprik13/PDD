@@ -2,12 +2,13 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatDistanceToNow } from 'date-fns';
 import { api } from '@/services/api';
-import type { ApiKey, ApiKeyCreated } from '@/types';
+import type { ApiKey, ApiKeyCreated, User } from '@/types';
 import styles from './shared.module.css';
 
 export function AdminApiKeysPage() {
   const { t } = useTranslation();
   const [keys, setKeys] = useState<ApiKey[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [ownerUserId, setOwnerUserId] = useState('');
   const [name, setName] = useState('');
@@ -18,7 +19,13 @@ export function AdminApiKeysPage() {
   async function refresh() {
     setLoading(true);
     try {
-      setKeys(await api.getApiKeys(true));
+      const [keyList, userList] = await Promise.all([
+        api.getApiKeys(true),
+        api.getUsers('agriculture'),
+      ]);
+      setKeys(keyList);
+      setUsers(userList);
+      setOwnerUserId((cur) => cur || (userList[0]?.id ?? ''));
     } catch {
       setError(t('common.loadError'));
     } finally {
@@ -28,15 +35,16 @@ export function AdminApiKeysPage() {
 
   useEffect(() => { void refresh(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const emailFor = (id: string) => users.find((u) => u.id === id)?.email ?? id;
+
   async function handleCreate(e: FormEvent) {
     e.preventDefault();
     setError('');
     setCreated(null);
     setSubmitting(true);
     try {
-      const result = await api.createApiKey({ ownerUserId: ownerUserId.trim(), name: name.trim() });
+      const result = await api.createApiKey({ ownerUserId, name: name.trim() });
       setCreated(result);
-      setOwnerUserId('');
       setName('');
       await refresh();
     } catch {
@@ -67,14 +75,21 @@ export function AdminApiKeysPage() {
         <form onSubmit={handleCreate}>
           <div className={styles.field}>
             <label className={styles.fieldLabel} htmlFor="owner">{t('apiKeys.ownerLabel')}</label>
-            <input
-              id="owner"
-              className={styles.input}
-              value={ownerUserId}
-              onChange={(e) => setOwnerUserId(e.target.value)}
-              placeholder="00000000-0000-0000-0000-000000000000"
-              required
-            />
+            {users.length > 0 ? (
+              <select
+                id="owner"
+                className={styles.input}
+                value={ownerUserId}
+                onChange={(e) => setOwnerUserId(e.target.value)}
+                required
+              >
+                {users.map((u) => (
+                  <option key={u.id} value={u.id}>{u.email}</option>
+                ))}
+              </select>
+            ) : (
+              <p className={styles.empty}>{t('apiKeys.noAgricultureUsers')}</p>
+            )}
           </div>
           <div className={styles.field}>
             <label className={styles.fieldLabel} htmlFor="keyname">{t('apiKeys.nameLabel')}</label>
@@ -88,7 +103,7 @@ export function AdminApiKeysPage() {
             />
           </div>
           {error && <p className={styles.empty} style={{ color: 'var(--red-txt, #b91c1c)' }}>{error}</p>}
-          <button type="submit" className={styles.btn} disabled={submitting}>
+          <button type="submit" className={styles.btn} disabled={submitting || !ownerUserId}>
             {submitting ? t('common.loading') : t('apiKeys.createBtn')}
           </button>
         </form>
@@ -123,7 +138,7 @@ export function AdminApiKeysPage() {
                 {k.name} <span className={styles.mono} style={{ color: 'var(--txt-3)' }}>····{k.tokenLast4}</span>
               </div>
               <div className={styles.listDesc}>
-                {k.scope} · {k.isActive ? t('apiKeys.active') : t('apiKeys.revoked')}
+                {emailFor(k.ownerUserId)} · {k.scope} · {k.isActive ? t('apiKeys.active') : t('apiKeys.revoked')}
                 {k.lastUsedAt ? ` · ${t('apiKeys.lastUsed', { when: formatDistanceToNow(new Date(k.lastUsedAt), { addSuffix: true }) })}` : ` · ${t('apiKeys.neverUsed')}`}
               </div>
             </div>

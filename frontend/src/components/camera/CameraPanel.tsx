@@ -79,11 +79,10 @@ export function CameraPanel() {
       <Card>
         <CardHeader
           title={t('camera.title')}
-          subtitle={t('camera.rowSubtitle', {
-            row: pos?.row ?? '—',
-            pos: pos?.positionMeters?.toFixed(1) ?? '—',
-            height: pos?.heightMeters?.toFixed(1) ?? '—',
-          })}
+          subtitle={[
+            pos?.row != null ? t('camera.hudRow', { row: pos.row }) : null,
+            pos?.positionMeters != null ? `${pos.positionMeters.toFixed(1)} m` : null,
+          ].filter(Boolean).join(' · ')}
           right={<Chip label={hasDisease ? t('camera.diseaseFound') : t('camera.allClear')} variant={hasDisease ? 'red' : 'green'} />}
         />
 
@@ -134,8 +133,7 @@ export function CameraPanel() {
             </div>
             <div className={styles.hudBottom}>
               <span className={styles.hudGps}>
-                {lat != null ? `${lat.toFixed(4)}°N ` : '— '}
-                {lon != null ? `${lon.toFixed(4)}°E · ` : '— · '}
+                {lat != null && lon != null ? `${lat.toFixed(4)}°N ${lon.toFixed(4)}°E · ` : ''}
                 {t('camera.hudRow', { row: pos?.row ?? '—' })} · {pos?.positionMeters?.toFixed(1) ?? '—'}m
               </span>
               {hasDisease && (
@@ -148,81 +146,6 @@ export function CameraPanel() {
           </div>
         </div>
 
-        {/* Position strip */}
-        <div className={styles.posGrid}>
-          <div className={styles.posItem}>
-            <div className={styles.posVal}>{lat != null ? `${lat.toFixed(4)}°N` : '—'}</div>
-            <div className={styles.posLbl}>{t('camera.latitude')}</div>
-          </div>
-          <div className={styles.posItem}>
-            <div className={styles.posVal}>{lon != null ? `${lon.toFixed(4)}°E` : '—'}</div>
-            <div className={styles.posLbl}>{t('camera.longitude')}</div>
-          </div>
-          <div className={styles.posItem}>
-            <div className={styles.posVal}>{pos?.positionMeters?.toFixed(1) ?? '—'} m</div>
-            <div className={styles.posLbl}>{t('camera.standPos')}</div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Model output */}
-      <Card>
-        <CardHeader title={t('camera.modelTitle')} right={<Chip label={t('camera.modelOutput')} />} />
-
-        <div className={styles.predictions}>
-          {(latest?.allPredictions ?? []).map((p) => (
-            <div key={p.diseaseClass} className={styles.predRow}>
-              <span className={styles.predName}>
-                {p.diseaseClass === 'healthy' ? t('detection.severity.healthy') : p.label}
-              </span>
-              <div className={styles.predBarWrap}>
-                <div className={styles.predBar}>
-                  <div
-                    className={styles.predFill}
-                    style={{
-                      width: `${p.confidence * 100}%`,
-                      background: p.diseaseClass === 'healthy' ? 'var(--forest-3)' : p.confidence > 0.6 ? '#ef4444' : '#f59e0b',
-                    }}
-                  />
-                </div>
-                <span
-                  className={styles.predPct}
-                  style={{ color: p.confidence > 0.6 && p.diseaseClass !== 'healthy' ? '#b91c1c' : 'var(--txt-2)' }}
-                >
-                  {(p.confidence * 100).toFixed(0)}%
-                </span>
-              </div>
-            </div>
-          ))}
-          {!latest && <p style={{ color: 'var(--txt-3)', fontSize: 13 }}>{t('camera.noModelOutput')}</p>}
-        </div>
-
-        {latest && (
-          <div className={styles.detailTable}>
-            <div className={styles.dtRow}>
-              <span className={styles.dtLabel}>{t('camera.boundingBoxes')}</span>
-              <span className={styles.dtVal}>{t('camera.detected', { count: 1 })}</span>
-            </div>
-            <div className={styles.dtRow}>
-              <span className={styles.dtLabel}>{t('camera.depth')}</span>
-              <span className={styles.dtVal}>{t('camera.depthVal', { val: latest.boundingBox.depthMeters.toFixed(2) })}</span>
-            </div>
-            <div className={styles.dtRow}>
-              <span className={styles.dtLabel}>{t('camera.leafArea')}</span>
-              <span className={styles.dtVal}>{t('camera.leafAreaVal', { val: latest.boundingBox.affectedAreaPercent })}</span>
-            </div>
-            <div className={styles.dtRow}>
-              <span className={styles.dtLabel}>{t('camera.confidenceGate')}</span>
-              <span className={styles.dtVal} style={{ color: 'var(--forest)' }}>
-                {latest.confidenceGatePassed ? t('camera.pass') : t('camera.fail')}
-              </span>
-            </div>
-            <div className={styles.dtRow}>
-              <span className={styles.dtLabel}>{t('camera.inferenceTime')}</span>
-              <span className={styles.dtVal}>{t('camera.inferenceVal', { val: latest.inferenceMs })}</span>
-            </div>
-          </div>
-        )}
       </Card>
     </div>
   );

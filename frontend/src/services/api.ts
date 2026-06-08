@@ -17,6 +17,7 @@ import type {
   ApiKey,
   ApiKeyCreated,
   CreateApiKeyRequest,
+  User,
 } from "@/types";
 import { authApi } from "@/services/auth";
 
@@ -164,6 +165,10 @@ export const api = {
     apiFetch<{ id: string }>("/api/treatments/applied", { method: "POST", body: data }),
 
   // ── Admin: ingestion API keys ──────────────────────────
+
+  /** GET /api/admin/users?role=agriculture — pick an API-key owner */
+  getUsers: (role?: string) =>
+    apiFetch<User[]>(`/api/admin/users${role ? `?role=${encodeURIComponent(role)}` : ""}`),
 
   /** GET /api/admin/api-keys */
   getApiKeys: (includeRevoked = false) =>

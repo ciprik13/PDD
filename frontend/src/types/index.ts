@@ -252,3 +252,9 @@ export interface CreateApiKeyRequest {
   ownerUserId: string;
   name: string;
 }
+
+export interface User {
+  id: string;
+  email: string;
+  roles: string[];
+}
