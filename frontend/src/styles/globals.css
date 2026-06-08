@@ -5,44 +5,49 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap');
 
-/* ── Design Tokens ─────────────────────────────────────── */
+/* ============================================================
+   Control-room dark theme. Variable NAMES are kept from the old
+   light system so every component re-themes from these values;
+   the semantics shift (e.g. --white is now a dark elevated surface,
+   --bark is now light text, --forest-dark is now a bright heading).
+   ============================================================ */
 :root {
-  /* Forest greens */
-  --forest-dark: #0d2318;
-  --forest:      #1e5c3a;
-  --forest-2:    #2d7a52;
-  --forest-3:    #45a876;
-  --forest-4:    #6fc49a;
-  --forest-5:    #b2e0c8;
-  --mist:        #e8f5ee;
-  --mist-2:      #ceeadb;
+  /* Brand greens — accents that glow on dark */
+  --forest-dark: #eafff3;   /* headings / hero numbers (light on dark) */
+  --forest:      #34a368;   /* primary action / brand */
+  --forest-2:    #3fb676;
+  --forest-3:    #58cf93;   /* bright accent, glows */
+  --forest-4:    #7bdcab;
+  --forest-5:    #294a38;   /* muted green fill */
+  --mist:        #15301f;   /* green chip background (dark) */
+  --mist-2:      #1d3f2a;
 
-  /* Surfaces — warm sage paper so white cards lift off the page */
-  --cream:       #eef3ec;
-  --white:       #ffffff;
-  --card:        #ffffff;
+  /* Surfaces */
+  --cream:       #08130d;   /* app background — deep forest black */
+  --white:       #0f1f17;   /* card / elevated surface */
+  --card:        #0f1f17;
 
   /* Text */
-  --bark:        #0f2d1c;
-  --bark-2:      #1e4030;
-  --txt-2:       #2d6044;
-  --txt-3:       #6aaa84;
+  --bark:        #e8f2ec;   /* primary text */
+  --bark-2:      #c4d8cc;
+  --txt-2:       #9dc1ad;
+  --txt-3:       #6f9582;   /* muted / labels */
 
   /* Borders */
-  --br:          #cce8d8;
-  --br-2:        #a8d8bc;
+  --br:          #1e3127;
+  --br-2:        #2c4636;
 
-  /* Semantics */
-  --amber:       #e8920a;
-  --amber-bg:    #fffbeb;
-  --amber-br:    #fde68a;
-  --amber-txt:   #7c3900;
-  --red:         #e63d3d;
-  --red-bg:      #fef2f2;
-  --red-br:      #fecaca;
-  --red-txt:     #8b1515;
-  --blue:        #3b82f6;
-  --blue-bg:     #dbeafe;
+  /* Semantics — dark-tinted backers, bright text */
+  --amber:       #f0a92a;
+  --amber-bg:    #2a2009;
+  --amber-br:    #574615;
+  --amber-txt:   #f6c453;
+  --red:         #ef5350;
+  --red-bg:      #2a1413;
+  --red-br:      #5a2422;
+  --red-txt:     #f6a6a3;
+  --blue:        #5aa2f7;
+  --blue-bg:     #122439;
 
   /* Typography */
   --font-sans:   'Schibsted Grotesk', -apple-system, system-ui, sans-serif;
@@ -56,10 +61,10 @@
   --r-24:  24px;
   --r-pill: 999px;
 
-  /* Shadows — soft, layered, low-opacity (Scandinavian depth) */
-  --shadow-sm:  0 1px 2px rgba(13, 35, 24, 0.04), 0 2px 6px -2px rgba(13, 35, 24, 0.06);
-  --shadow-md:  0 8px 24px -8px rgba(13, 35, 24, 0.14);
-  --shadow-lg:  0 20px 44px -16px rgba(13, 35, 24, 0.20);
+  /* Shadows — deep, with a faint green glow ring for elevation on dark */
+  --shadow-sm:  0 1px 2px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(120, 220, 171, 0.04);
+  --shadow-md:  0 14px 34px -12px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(120, 220, 171, 0.05);
+  --shadow-lg:  0 28px 60px -18px rgba(0, 0, 0, 0.75);
 }
 
 /* ── Reset ─────────────────────────────────────────────── */
