@@ -214,6 +214,90 @@ PUT semantics — full replacement, not patch. The body must include `id` matchi
 
 ---
 
+## Plants — `/api/plants`
+
+| Route | Method | Auth | Roles |
+|---|---|---|---|
+| `/api/plants` | `GET` | bearer | `admin`, `agriculture` |
+
+All plants the caller can see, each with its latest disease status (derived from the most recent detection). Agriculture users see only plants they own; admin sees all. Newest-seen first.
+
+**Response 200** — array of `PlantSummary`:
+```json
+[
+  {
+    "plantId": "P023",
+    "row": 7,
+    "latestSeverity": "warning",
+    "latestLabel": "Early Blight (A. solani)",
+    "latestDiseaseClass": "early_blight",
+    "lastSeenAt": "2026-06-08T12:01:00Z",
+    "detectionCount": 12
+  }
+]
+```
+Fields except `plantId`/`detectionCount` are `null` for a plant with no detections yet.
+
+## Plant passport — `/api/passports/{plantId}`
+
+| Route | Method | Auth | Roles |
+|---|---|---|---|
+| `/api/passports/{plantId}` | `GET` | bearer | `admin`, `agriculture` |
+
+Full life history for one plant: identity, current status, a chronological `events[]` timeline (scans + applied treatments), and a daily `severityHistory[]` sparkline (`value` is 0–100). **404** when the plant doesn't exist or isn't visible to the caller.
+
+## Dashboard — `/api/dashboard/stats`
+
+| Route | Method | Auth | Roles |
+|---|---|---|---|
+| `/api/dashboard/stats` | `GET` | bearer | `admin`, `agriculture` |
+
+`{ detectionsToday, detectionsDelta, avgConfidence (0–1), rowsScanned, totalRows, plantsTracked }` — aggregated over the caller's visible data.
+
+## System status — `/api/system/status`
+
+| Route | Method | Auth | Roles |
+|---|---|---|---|
+| `/api/system/status` | `GET` | bearer | `admin`, `agriculture` |
+
+`{ deviceStatus, cameraConnected, gpsActive, modelLoaded, modelName, syncedAt, pendingAlerts }`. `deviceStatus` is `online` when a detection was ingested in the last 5 minutes, else `offline`. `modelName` is `null` (no real source yet).
+
+## Treatments — `/api/treatments`
+
+| Route | Method | Auth | Roles |
+|---|---|---|---|
+| `/api/treatments?diseaseClass=late_blight` | `GET` | bearer | `admin`, `agriculture` |
+| `/api/treatments/applied` | `GET` | bearer | `admin`, `agriculture` |
+| `/api/treatments/applied` | `POST` | bearer | `admin`, `agriculture` |
+
+`GET /api/treatments?diseaseClass=` returns the recommendation catalog for a disease (snake_case class), ordered by `rank` (biological-first). **422** on an unknown class.
+
+`GET /api/treatments/applied?limit=&plantId=` returns applied-treatment history (tenant-scoped, newest first).
+
+`POST /api/treatments/applied` records an application:
+```json
+{ "treatmentId": "<guid>", "plantId": "P023", "appliedAt": "2026-06-08T12:00:00Z", "notes": "full row" }
+```
+**201** `{ "id": "<guid>" }`. **422** if the treatment is unknown or the plant isn't owned by the caller.
+
+## Camera — `/api/camera`
+
+| Route | Method | Auth | Roles |
+|---|---|---|---|
+| `/api/camera/frame` | `GET` | bearer | `admin`, `agriculture` |
+| `/api/camera/token` | `GET` | bearer | `admin`, `agriculture` |
+| `/api/camera/stream?token=` | `GET` | stream token | — |
+| `/api/camera/gps` | `GET` | bearer | `admin`, `agriculture` |
+| `/api/stand/position` | `GET` | bearer | `admin`, `agriculture` |
+
+`frame`/`position` derive real fields (row, position, depth) from the latest detection; GPS/height/speed are `null`.
+
+The live feed is proxied from the on-prem Jetson over a private mesh network (Tailscale). `GET /api/camera/token` issues a single-use 60s token; the browser then loads `GET /api/camera/stream?token=…` (MJPEG). `/api/camera/gps` proxies live GPS. The device URLs are server config (`Jetson:StreamUrl`, `Jetson:BaseUrl`) and never exposed to the browser. **502** when the device is unreachable.
+
+> Environmental sensor readings (temperature/humidity) are not modeled — no endpoint exists.
+
+---
+
 ## Conventions
 
 ### IDs
