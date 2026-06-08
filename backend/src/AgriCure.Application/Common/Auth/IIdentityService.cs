@@ -19,6 +19,17 @@ public interface IIdentityService
     /// </summary>
     Task<IReadOnlyList<IdentityUserContext>> ListUsersAsync(
         string? roleName, CancellationToken cancellationToken);
+
+    /// <summary>Creates a user and assigns them a single role. Admin-driven onboarding.</summary>
+    Task<IdentityOperationResult> CreateUserAsync(
+        string email, string password, string roleName, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Adds or removes a role for an existing user. Returns <c>false</c> if the user
+    /// doesn't exist. Idempotent — assigning a role the user already has is a no-op.
+    /// </summary>
+    Task<bool> SetRoleAsync(
+        Guid userId, string roleName, bool assigned, CancellationToken cancellationToken);
 }
 
 public sealed record IdentityErrorInfo(string Code, string Description);
