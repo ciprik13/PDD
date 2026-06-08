@@ -6,6 +6,7 @@ using AgriCure.Application;
 using AgriCure.Application.Jobs;
 using AgriCure.Infrastructure;
 using AgriCure.Infrastructure.Identity;
+using AgriCure.Infrastructure.Persistence;
 using Hangfire;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http.Features;
@@ -67,6 +68,12 @@ builder.Services.ConfigureHttpJsonOptions(opts =>
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure();
 builder.Services.AddHangfireInfrastructure();
+
+// Camera live-stream proxy: in-memory single-use stream tokens + an HTTP client used to
+// reach the on-prem Jetson over the private mesh network (Tailscale). No streaming timeout
+// so the long-lived MJPEG connection isn't cut off mid-feed.
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpClient("jetson", c => c.Timeout = Timeout.InfiniteTimeSpan);
 
 // Picture uploads can run up to StorageOptions.MaxUploadBytes; raise both the form
 // limit and the Kestrel request-body limit so multipart uploads don't get truncated.
@@ -172,6 +179,8 @@ app.UseSwaggerUI();
 await app.Services.ApplyMigrationsAsync();
 
 await app.Services.SeedIdentityAsync();
+
+await app.Services.SeedTreatmentCatalogAsync();
 
 app.UseHangfireDashboard("/hangfire", new DashboardOptions
 {

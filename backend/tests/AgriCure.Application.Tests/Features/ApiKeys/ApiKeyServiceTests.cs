@@ -228,12 +228,16 @@ public sealed class ApiKeyServiceTests
         public DbSet<Picture> Pictures => inner.Pictures;
         public DbSet<DetectionPicture> DetectionPictures => inner.DetectionPictures;
         public DbSet<ApiKey> ApiKeys => inner.ApiKeys;
+        public DbSet<AgriCure.Domain.Treatments.Treatment> Treatments => inner.Treatments;
+        public DbSet<AgriCure.Domain.Treatments.AppliedTreatment> AppliedTreatments => inner.AppliedTreatments;
         public Task<int> SaveChangesAsync(CancellationToken ct) => inner.SaveChangesAsync(ct);
     }
 
     private sealed class ApiKeyDbContext(DbContextOptions<ApiKeyDbContext> options) : DbContext(options)
     {
         public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
+        public DbSet<AgriCure.Domain.Treatments.Treatment> Treatments => Set<AgriCure.Domain.Treatments.Treatment>();
+        public DbSet<AgriCure.Domain.Treatments.AppliedTreatment> AppliedTreatments => Set<AgriCure.Domain.Treatments.AppliedTreatment>();
         public DbSet<Plant> Plants => Set<Plant>();
         public DbSet<Detection> Detections => Set<Detection>();
         public DbSet<ClassPrediction> Predictions => Set<ClassPrediction>();
