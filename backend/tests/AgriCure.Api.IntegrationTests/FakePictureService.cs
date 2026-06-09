@@ -53,7 +53,8 @@ internal sealed class FakePictureService(IApplicationDbContext db) : IPictureSer
     public Task<string?> GetUrlAsync(Guid pictureId, CancellationToken cancellationToken = default) =>
         Task.FromResult<string?>(null);
 
-    public string GetUrl(Picture picture) => string.Empty;
+    // Mirror the real service's "base + path" composition so callers get a usable URL.
+    public string GetUrl(Picture picture) => $"https://fake-storage.local/{picture.VirtualPath}";
 
     public Task<byte[]?> GetBinaryAsync(Picture picture, CancellationToken cancellationToken = default) =>
         Task.FromResult<byte[]?>(null);

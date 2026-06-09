@@ -104,7 +104,8 @@
       "diseaseActive": "Болезнь активна",
       "healthy": "Здорово",
       "sparkStart": "13 апр",
-      "sparkEnd": "Сегодня"
+      "sparkEnd": "Сегодня",
+      "viewPhoto": "Посмотреть снимок"
     }
   },
   "treatment": {

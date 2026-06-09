@@ -13,6 +13,7 @@ public enum PassportEventType
 }
 
 /// <summary>One entry in a plant's life timeline.</summary>
+/// <param name="ImageUrl">Public URL of the frame captured for this detection, when one is linked. Null for non-detection events.</param>
 public sealed record PassportEventDto(
     string Id,
     PassportEventType Type,
@@ -21,7 +22,8 @@ public sealed record PassportEventDto(
     string Description,
     Guid? DetectionId = null,
     double? Confidence = null,
-    Severity? Severity = null);
+    Severity? Severity = null,
+    string? ImageUrl = null);
 
 /// <summary>A plant's "passport": identity, current status, full event history and a severity sparkline.</summary>
 public sealed record PlantPassportDto(

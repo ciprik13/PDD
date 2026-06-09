@@ -2,6 +2,7 @@ using System.Globalization;
 using AgriCure.Application.Common.Auth;
 using AgriCure.Application.Common.Exceptions;
 using AgriCure.Application.Common.Interfaces;
+using AgriCure.Application.Common.Pictures;
 using AgriCure.Application.Features.Passports.Common;
 using AgriCure.Domain.Detections;
 using MediatR;
@@ -19,7 +20,8 @@ public sealed record GetPlantPassportQuery(string PlantId) : IRequest<PlantPassp
 
 internal sealed class GetPlantPassportQueryHandler(
     IApplicationDbContext db,
-    ICurrentUserAccessor currentUser)
+    ICurrentUserAccessor currentUser,
+    IPictureService pictures)
     : IRequestHandler<GetPlantPassportQuery, PlantPassportDto>
 {
     public async Task<PlantPassportDto> Handle(
@@ -38,6 +40,20 @@ internal sealed class GetPlantPassportQueryHandler(
             .Where(d => d.PlantId == plant.Id)
             .OrderBy(d => d.Timestamp)
             .ToListAsync(cancellationToken);
+
+        // Each detection may have one linked frame. Join the link table to the pictures in a
+        // single query so the timeline can show the captured photo per detection event.
+        var detectionIds = detections.Select(d => d.Id).ToArray();
+        var linkedPictures = await db.DetectionPictures
+            .Where(dp => detectionIds.Contains(dp.DetectionId))
+            .Join(
+                db.Pictures,
+                dp => dp.PictureId,
+                pic => pic.Id,
+                (dp, pic) => new { dp.DetectionId, Picture = pic })
+            .ToListAsync(cancellationToken);
+        var imageUrlByDetection = linkedPictures
+            .ToDictionary(x => x.DetectionId, x => pictures.GetUrl(x.Picture));
 
         var applied = await db.AppliedTreatments
             .Where(a => a.PlantId == plant.Id)
@@ -90,7 +106,8 @@ internal sealed class GetPlantPassportQueryHandler(
                 Description: description,
                 DetectionId: d.Id,
                 Confidence: top?.Confidence,
-                Severity: d.Severity));
+                Severity: d.Severity,
+                ImageUrl: imageUrlByDetection.GetValueOrDefault(d.Id)));
         }
 
         foreach (var a in applied)

@@ -142,6 +142,8 @@ export interface PassportEvent {
   detectionId?: string;
   confidence?: number;
   severity?: DetectionSeverity;
+  /** Public URL of the frame captured for this detection, when one is linked. */
+  imageUrl?: string;
   titleKey?: string;
   descKey?: string;
   descParams?: Record<string, unknown>;

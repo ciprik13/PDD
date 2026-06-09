@@ -164,7 +164,8 @@
       "diseaseActive": "Disease active",
       "healthy": "Healthy",
       "sparkStart": "Apr 13",
-      "sparkEnd": "Today"
+      "sparkEnd": "Today",
+      "viewPhoto": "View captured photo"
     }
   },
   "treatment": {

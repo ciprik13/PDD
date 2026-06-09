@@ -86,6 +86,44 @@
 .tlDesc { font-size: 10.5px; color: var(--txt-3); margin-top: 1px; line-height: 1.4; }
 .tlTime { font-size: 10px; color: var(--txt-3); margin-top: 2px; font-weight: 600; font-family: monospace; }
 
+/* Captured-frame thumbnail under a detection event; click opens the lightbox. */
+.tlThumb {
+  display: block;
+  margin-top: 8px;
+  padding: 0;
+  border: 1px solid var(--br);
+  border-radius: var(--r-8);
+  overflow: hidden;
+  cursor: pointer;
+  background: var(--mist);
+  width: 100%;
+  max-width: 220px;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.tlThumb:hover { border-color: var(--forest-3); transform: translateY(-1px); }
+.tlThumb img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; }
+
+/* Full-image overlay. */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.8);
+  cursor: zoom-out;
+  backdrop-filter: blur(2px);
+}
+.lightbox img {
+  max-width: 92vw;
+  max-height: 92vh;
+  border-radius: var(--r-8);
+  box-shadow: 0 12px 48px rgba(0, 0, 0, 0.5);
+  cursor: default;
+}
+
 @media print {
   .item { break-inside: avoid; }
   .tlItem { break-inside: avoid; }
