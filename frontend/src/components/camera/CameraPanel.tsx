@@ -108,24 +108,6 @@ export function CameraPanel() {
             />
           )}
 
-          {/* Bounding box overlay */}
-          {hasDisease && latest && (
-            <div
-              className={styles.bbox}
-              style={{
-                left: `${latest.boundingBox.x * 100}%`,
-                top: `${latest.boundingBox.y * 100}%`,
-                width: `${latest.boundingBox.width * 100}%`,
-                height: `${latest.boundingBox.height * 100}%`,
-              }}
-            >
-              <span className={styles.bboxLabel}>
-                {latest.topPrediction.label.split('(')[0].trim()}{' '}
-                {(latest.topPrediction.confidence * 100).toFixed(1)}%
-              </span>
-            </div>
-          )}
-
           {/* HUD overlay */}
           <div className={styles.hud}>
             <div className={styles.hudTop}>

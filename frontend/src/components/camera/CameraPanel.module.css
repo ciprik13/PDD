@@ -7,9 +7,10 @@
 .camBox {
   background: var(--bark);
   border-radius: var(--r-12);
-  height: 58vh;
+  width: 100%;
+  aspect-ratio: 16 / 9;
   min-height: 340px;
-  max-height: 760px;
+  max-height: 80vh;
   position: relative;
   overflow: hidden;
   margin-bottom: 0;
@@ -21,30 +22,8 @@
   background: linear-gradient(160deg, #0b1e10 0%, #163524 40%, #0f2a18 70%, #071408 100%);
 }
 
-.camStream { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-
-/* Bounding box */
-.bbox {
-  position: absolute;
-  border: 2px solid #ef4444;
-  border-radius: 4px;
-  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3);
-}
-
-.bboxLabel {
-  position: absolute;
-  top: -22px;
-  left: 0;
-  background: #ef4444;
-  color: white;
-  font-size: 9px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 4px;
-  white-space: nowrap;
-  font-family: var(--font-sans);
-  letter-spacing: 0.02em;
-}
+/* Full frame, never cropped — letterbox areas show the foliage backdrop. */
+.camStream { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 
 /* HUD */
 .hud {
