@@ -22,7 +22,8 @@ import type {
 
 function usePolling<T>(
   fetcher: () => Promise<T>,
-  intervalMs = 5000
+  intervalMs = 5000,
+  deps: unknown[] = []
 ): { data: T | null; loading: boolean; error: string | null; refetch: () => void } {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,11 +46,14 @@ function usePolling<T>(
     }
   }, []); // stable — never recreated
 
+  // Re-fetch immediately whenever `deps` change (e.g. a different plant is
+  // selected), not just on the polling interval.
   useEffect(() => {
+    setLoading(true);
     fetch();
     const id = setInterval(fetch, intervalMs);
     return () => clearInterval(id);
-  }, [fetch, intervalMs]);
+  }, [fetch, intervalMs, ...deps]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return { data, loading, error, refetch: fetch };
 }
@@ -80,7 +84,8 @@ export function usePassport(plantId: string | null) {
       if (!plantId) return Promise.reject(new Error('no plant selected'));
       return api.getPassport(plantId);
     },
-    60_000
+    60_000,
+    [plantId]
   );
 }
 
@@ -90,13 +95,15 @@ export function useTreatments(diseaseClass: string | null) {
       if (!diseaseClass) return Promise.resolve([]);
       return api.getTreatments(diseaseClass);
     },
-    300_000 // treatments don't change often
+    300_000, // treatments don't change often
+    [diseaseClass]
   );
 }
 
 export function useAppliedTreatments(plantId?: string) {
   return usePolling<AppliedTreatment[]>(
     () => api.getAppliedTreatments(plantId),
-    60_000
+    60_000,
+    [plantId]
   );
 }

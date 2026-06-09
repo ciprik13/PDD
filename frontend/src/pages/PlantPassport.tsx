@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import { Star } from 'lucide-react';
 import { PassportTimeline } from '@/components/detection/DetectionList';
 import { usePlants, usePassport, useTreatments } from '@/hooks/useApi';
 import { api } from '@/services/api';
-import type { DiseaseClass } from '@/types';
+import type { DiseaseClass, DetectionSeverity, PlantSummary } from '@/types';
 import styles from './shared.module.css';
 
 const DISEASES: DiseaseClass[] = [
@@ -18,39 +19,41 @@ const DISEASES: DiseaseClass[] = [
   'spider_mites',
 ];
 
+function severityColor(s: DetectionSeverity | null) {
+  return s === 'critical' ? '#ef4444' : s === 'warning' ? '#f59e0b' : 'var(--forest-3)';
+}
+
 export function PlantPassportPage() {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { data: plants } = usePlants();
+  const { data: plants, loading: plantsLoading } = usePlants();
+  // No auto-select: the user picks a plant first.
   const [selected, setSelected] = useState<string | null>(searchParams.get('plant'));
-
-  // Default to the first plant once the list loads and nothing is chosen.
-  useEffect(() => {
-    if (!selected && plants && plants.length > 0) {
-      setSelected(plants[0].plantId);
-    }
-  }, [plants, selected]);
 
   const { data: passport, loading, error, refetch } = usePassport(selected);
 
   function choose(plantId: string) {
-    setSelected(plantId);
+    setSelected(plantId || null);
     setSearchParams(plantId ? { plant: plantId } : {});
   }
+
+  const subtitle = passport
+    ? t('plantPassport.subtitleFor', {
+        id: String(passport.plantIndex).padStart(3, '0'),
+        row: passport.row,
+      })
+    : t('plantPassport.subtitlePick');
 
   return (
     <div className={styles.page}>
       <div className={styles.topbar}>
         <div>
           <h1 className={styles.pageHead}>{t('plantPassport.title')}</h1>
-          <p className={styles.pageSub}>{t('plantPassport.subtitle')}</p>
+          <p className={styles.pageSub}>{subtitle}</p>
         </div>
         {plants && plants.length > 0 && (
-          <select
-            className={styles.select}
-            value={selected ?? ''}
-            onChange={(e) => choose(e.target.value)}
-          >
+          <select className={styles.select} value={selected ?? ''} onChange={(e) => choose(e.target.value)}>
+            <option value="">{t('plantPassport.choose')}</option>
             {plants.map((p) => (
               <option key={p.plantId} value={p.plantId}>
                 {p.plantId}{p.row != null ? ` · ${t('plants.rowShort', { row: p.row })}` : ''}
@@ -60,21 +63,62 @@ export function PlantPassportPage() {
         )}
       </div>
 
+      {/* Loading / empty plant list */}
+      {plantsLoading && !plants && (
+        <div className={styles.card}><p className={styles.empty}>{t('common.loading')}</p></div>
+      )}
       {plants && plants.length === 0 && (
         <div className={styles.card}><p className={styles.empty}>{t('plants.empty')}</p></div>
       )}
-      {selected && loading && (
+
+      {/* No plant chosen yet → friendly picker */}
+      {plants && plants.length > 0 && !selected && (
+        <div className={styles.card}>
+          <div className={styles.prompt}>
+            <div className={styles.promptIcon}><Star size={22} /></div>
+            <div className={styles.promptTitle}>{t('plantPassport.pickTitle')}</div>
+            <div className={styles.promptSub}>{t('plantPassport.pickSub', { count: plants.length })}</div>
+            <div className={styles.pickGrid}>
+              {plants.map((p) => (
+                <PlantPickButton key={p.plantId} plant={p} onPick={() => choose(p.plantId)} />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* A plant is chosen */}
+      {selected && loading && !passport && (
         <div className={styles.card}><p className={styles.empty}>{t('common.loading')}</p></div>
       )}
       {selected && error && !passport && (
-        <div className={styles.card}><p className={styles.empty}>{t('common.loadError')}</p></div>
+        <div className={styles.card}>
+          <p className={styles.empty}>{t('common.loadError')}</p>
+          <div style={{ marginTop: 12 }}>
+            <button className={styles.btn} onClick={refetch}>{t('common.retry')}</button>
+          </div>
+        </div>
       )}
       {passport && <PassportTimeline passport={passport} />}
-
       {selected && passport && (
         <ApplyTreatmentPanel plantId={selected} onApplied={refetch} />
       )}
     </div>
+  );
+}
+
+function PlantPickButton({ plant, onPick }: { plant: PlantSummary; onPick: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <button className={styles.pickItem} onClick={onPick}>
+      <span className={styles.pickDot} style={{ background: severityColor(plant.latestSeverity) }} />
+      <span>
+        <span className={styles.pickName}>{plant.plantId}</span>
+        <span className={styles.pickRow}>
+          {plant.row != null ? t('plants.rowShort', { row: plant.row }) : t('plants.noScans')}
+        </span>
+      </span>
+    </button>
   );
 }
 
