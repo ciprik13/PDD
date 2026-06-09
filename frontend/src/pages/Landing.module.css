@@ -1,0 +1,109 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(80% 60% at 50% -10%, rgba(111, 196, 154, 0.18) 0%, transparent 60%),
+    radial-gradient(60% 50% at 100% 100%, rgba(30, 92, 58, 0.10) 0%, transparent 55%),
+    var(--cream);
+  color: var(--bark);
+}
+
+/* ── Top bar ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 32px;
+}
+.brand { display: flex; align-items: center; gap: 10px; }
+.logo { width: 34px; height: 34px; border-radius: 9px; object-fit: contain; }
+.brandName { font-size: 18px; font-weight: 800; color: var(--forest-dark); letter-spacing: -0.3px; }
+.signInTop {
+  font-size: 13px; font-weight: 700; color: var(--forest);
+  text-decoration: none; padding: 9px 18px; border-radius: var(--r-pill);
+  border: 1px solid var(--br-2); background: var(--white);
+  transition: background 0.15s, transform 0.15s;
+}
+.signInTop:hover { background: var(--mist); transform: translateY(-1px); }
+
+/* ── Hero ── */
+.hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 32px 24px 56px;
+  max-width: 940px;
+  margin: 0 auto;
+}
+.eyebrow {
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em;
+  color: var(--forest-2); margin-bottom: 18px;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px; border-radius: var(--r-pill);
+  background: var(--mist); border: 1px solid var(--br-2);
+}
+.title {
+  font-family: var(--font-serif);
+  font-size: clamp(40px, 7vw, 76px);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -1.5px;
+  color: var(--forest-dark);
+  margin-bottom: 22px;
+}
+.title em { font-style: italic; color: var(--forest-2); }
+.lede {
+  font-size: clamp(15px, 2.2vw, 19px);
+  line-height: 1.65;
+  color: var(--txt-2);
+  max-width: 660px;
+  margin-bottom: 32px;
+}
+.ctaRow { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+.ctaPrimary {
+  font-size: 15px; font-weight: 700; color: #fff;
+  background: var(--forest); border: none; border-radius: var(--r-pill);
+  padding: 14px 28px; cursor: pointer; text-decoration: none;
+  box-shadow: var(--shadow-md);
+  transition: background 0.15s, transform 0.15s;
+}
+.ctaPrimary:hover { background: var(--forest-2); transform: translateY(-2px); }
+
+/* ── Feature cards ── */
+.features {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  width: 100%;
+  margin-top: 52px;
+}
+.feature {
+  background: var(--white);
+  border: 1px solid var(--br);
+  border-radius: var(--r-16);
+  padding: 22px 20px;
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+}
+.featureIcon {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--mist); color: var(--forest); margin-bottom: 14px;
+}
+.featureTitle { font-size: 15px; font-weight: 700; color: var(--bark); margin-bottom: 6px; }
+.featureDesc { font-size: 13px; line-height: 1.55; color: var(--txt-3); font-weight: 500; }
+
+.footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 12px;
+  color: var(--txt-3);
+}
+
+@media (max-width: 760px) {
+  .features { grid-template-columns: 1fr; }
+}

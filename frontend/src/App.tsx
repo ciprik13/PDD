@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute, AdminRoute } from "@/components/auth/ProtectedRoute";
 import { LoginPage } from "@/pages/Login";
+import { LandingPage } from "@/pages/Landing";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { DashboardPage } from "@/pages/Dashboard";
 import { LiveCameraPage } from "@/pages/LiveCamera";
@@ -39,6 +40,7 @@ export default function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          <Route path="/welcome" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route
             path="/*"

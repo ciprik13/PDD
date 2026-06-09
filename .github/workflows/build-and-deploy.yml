@@ -90,6 +90,7 @@ jobs:
           ADMIN_EMAIL=${{ secrets.ADMIN_EMAIL }}
           ADMIN_PASSWORD=${{ secrets.ADMIN_PASSWORD }}
           CORS_ALLOWED_ORIGIN_0=${{ secrets.CORS_ALLOWED_ORIGIN_0 }}
+          CORS_ALLOWED_ORIGIN_1=${{ secrets.CORS_ALLOWED_ORIGIN_1 }}
           JETSON_STREAM_URL=${{ vars.JETSON_STREAM_URL }}
           JETSON_BASE_URL=${{ vars.JETSON_BASE_URL }}
           API_HOST_PORT=${{ vars.API_HOST_PORT || '8090' }}

@@ -299,6 +299,26 @@
       "time": "Time"
     }
   },
+  "landing": {
+    "eyebrow": "AI crop disease detection",
+    "title": "Catch plant disease <em>before</em> it spreads.",
+    "lede": "AgriCure watches your greenhouse in real time. Edge cameras and on-device AI spot disease on every plant, keep a full health history, and recommend the right treatment — so you act early, not after the damage is done.",
+    "signIn": "Sign in",
+    "cta": "Open the dashboard",
+    "f1": {
+      "title": "Live detection",
+      "desc": "ZED 2 cameras stream the rows; YOLOv8 flags disease with confidence and location in real time."
+    },
+    "f2": {
+      "title": "Plant passports",
+      "desc": "Every plant gets a health timeline — scans, severity trends and the treatments applied to it."
+    },
+    "f3": {
+      "title": "Smart treatments",
+      "desc": "Bio-first recommendations per disease, plus a record of what was applied and when."
+    },
+    "footer": "AgriCure — intelligent crop disease detection"
+  },
   "login": {
     "welcome": "Welcome back",
     "createAccount": "Create account",

@@ -5,14 +5,14 @@
   background: var(--cream);
 }
 
-/* Control-room atmosphere: deep forest-black with faint green glows. */
+/* Quiet light atmosphere: a soft top wash, no busy doodles. */
 .content {
   overflow-y: auto;
   min-height: 100vh;
   background-color: var(--cream);
   background-image:
-    radial-gradient(90% 50% at 12% 0%, rgba(52, 163, 104, 0.10) 0%, transparent 55%),
-    radial-gradient(70% 50% at 100% 100%, rgba(88, 207, 147, 0.07) 0%, transparent 50%);
+    radial-gradient(120% 60% at 50% -10%, rgba(255, 255, 255, 0.85) 0%, transparent 60%),
+    radial-gradient(ellipse at 100% 0%, rgba(69, 168, 118, 0.06) 0%, transparent 42%);
   background-attachment: fixed;
 }
 

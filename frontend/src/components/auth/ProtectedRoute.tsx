@@ -5,7 +5,8 @@ import { useAuth } from '@/context/AuthContext';
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated, initializing } = useAuth();
   if (initializing) return null;
-  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  // Unauthenticated visitors land on the public intro page first.
+  if (!isAuthenticated) return <Navigate to="/welcome" replace />;
   return <>{children}</>;
 }
 

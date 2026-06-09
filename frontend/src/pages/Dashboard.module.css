@@ -89,18 +89,17 @@
   border-color: var(--br-2);
 }
 
-/* A glowing left rule in the stat's accent — control-room signal lighting. */
+/* A single quiet left rule in the stat's accent. */
 .statBlock::before {
   content: '';
   position: absolute;
-  top: 14px;
-  bottom: 14px;
+  top: 16px;
+  bottom: 16px;
   left: 0;
   width: 3px;
   background: var(--stat-accent, var(--forest-3));
   border-radius: 0 3px 3px 0;
-  box-shadow: 0 0 14px -1px var(--stat-accent, var(--forest-3));
-  opacity: 0.95;
+  opacity: 0.9;
 }
 
 .statTop {

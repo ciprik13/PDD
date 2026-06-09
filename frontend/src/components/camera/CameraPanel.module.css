@@ -1,18 +1,18 @@
-/* Side-by-side: live feed (wider) + model output (narrower) */
+/* Single full-width live feed (the model-output panel was removed). */
 .wrapper {
-  display: grid;
-  grid-template-columns: 3fr 2fr;
-  gap: 14px;
+  display: block;
 }
 
-/* ── Live camera card ── */
+/* ── Live camera card — large, centered hero feed ── */
 .camBox {
   background: var(--bark);
   border-radius: var(--r-12);
-  height: 260px;
+  height: 58vh;
+  min-height: 340px;
+  max-height: 760px;
   position: relative;
   overflow: hidden;
-  margin-bottom: 14px;
+  margin-bottom: 0;
 }
 
 .camFoliage {
