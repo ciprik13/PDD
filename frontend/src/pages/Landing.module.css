@@ -104,6 +104,75 @@
   color: var(--txt-3);
 }
 
+/* ── In-app home variant ── */
+.pageHome { min-height: calc(100vh - 0px); }
+.pageHome .hero { padding-top: 48px; }
+
+.ctaSecondary {
+  font-size: 15px; font-weight: 700; color: var(--forest);
+  background: var(--white); border: 1px solid var(--br-2); border-radius: var(--r-pill);
+  padding: 13px 26px; cursor: pointer; text-decoration: none;
+  transition: background 0.15s, transform 0.15s;
+}
+.ctaSecondary:hover { background: var(--mist); transform: translateY(-2px); }
+
+/* ── Live stats strip (home) ── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  width: 100%;
+  margin-top: 44px;
+}
+.stat {
+  background: var(--white);
+  border: 1px solid var(--br);
+  border-radius: var(--r-16);
+  padding: 16px 18px;
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+.statValue {
+  font-family: var(--font-serif);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: var(--forest-dark);
+  line-height: 1;
+}
+.statLabel {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--txt-3); margin-top: 8px;
+}
+
+/* ── How it works ── */
+.howWrap { width: 100%; margin-top: 64px; }
+.sectionTitle {
+  font-family: var(--font-serif);
+  font-size: 26px; font-weight: 600; letter-spacing: -0.4px;
+  color: var(--forest-dark); text-align: center; margin-bottom: 24px;
+}
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.step {
+  position: relative;
+  background: var(--white);
+  border: 1px solid var(--br);
+  border-radius: var(--r-16);
+  padding: 24px 20px 20px;
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+}
+.stepNum {
+  position: absolute; top: 16px; right: 18px;
+  font-family: var(--font-serif); font-size: 24px; font-weight: 700;
+  color: var(--mist-2); line-height: 1;
+}
+.diseases {
+  text-align: center; font-size: 13px; color: var(--txt-3);
+  font-weight: 500; margin-top: 22px;
+}
+
 @media (max-width: 760px) {
-  .features { grid-template-columns: 1fr; }
+  .features, .steps, .stats { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
 }

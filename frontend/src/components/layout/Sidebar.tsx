@@ -37,7 +37,7 @@ export function Sidebar() {
     {
       labelKey: 'sidebar.nav.groups.monitor',
       items: [
-        { to: '/', icon: <LayoutDashboard size={15} />, labelKey: 'sidebar.nav.items.dashboard' },
+        { to: '/', icon: <LayoutDashboard size={15} />, labelKey: 'sidebar.nav.items.home' },
         { to: '/camera', icon: <Camera size={15} />, labelKey: 'sidebar.nav.items.liveCamera', live: true },
       ],
     },

@@ -4,7 +4,6 @@ import { ProtectedRoute, AdminRoute } from "@/components/auth/ProtectedRoute";
 import { LoginPage } from "@/pages/Login";
 import { LandingPage } from "@/pages/Landing";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { DashboardPage } from "@/pages/Dashboard";
 import { LiveCameraPage } from "@/pages/LiveCamera";
 import { PlantsPage } from "@/pages/Plants";
 import { PlantPassportPage } from "@/pages/PlantPassport";
@@ -20,7 +19,7 @@ function AppShell() {
       <Sidebar />
       <main className={styles.content}>
         <Routes>
-          <Route path="/" element={<DashboardPage />} />
+          <Route path="/" element={<LandingPage variant="home" />} />
           <Route path="/camera"     element={<LiveCameraPage />} />
           <Route path="/plants"     element={<PlantsPage />} />
           <Route path="/passport"   element={<PlantPassportPage />} />

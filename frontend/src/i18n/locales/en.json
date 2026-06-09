@@ -10,6 +10,7 @@
       },
       "items": {
         "dashboard": "Dashboard",
+        "home": "Home",
         "liveCamera": "Live camera",
         "fieldReport": "Field report",
         "detectionLog": "Detection log",
@@ -305,6 +306,13 @@
     "lede": "AgriCure watches your greenhouse in real time. Edge cameras and on-device AI spot disease on every plant, keep a full health history, and recommend the right treatment — so you act early, not after the damage is done.",
     "signIn": "Sign in",
     "cta": "Open the dashboard",
+    "ctaCamera": "Open live camera",
+    "ctaPlants": "View plants",
+    "howTitle": "How AgriCure works",
+    "s1": { "title": "Scan the rows", "desc": "ZED 2 stereo cameras on the moving stand stream every row of the greenhouse in real time." },
+    "s2": { "title": "Detect on-device", "desc": "A YOLOv8 model flags disease per plant with a confidence score, severity and the affected leaf area." },
+    "s3": { "title": "Act early", "desc": "Get a bio-first treatment recommendation, apply it, and track each plant's health on its passport." },
+    "diseases": "Detects 8 tomato diseases — late & early blight, fusarium wilt, powdery mildew, bacterial spot, leaf mold, septoria leaf spot and spider mites.",
     "f1": {
       "title": "Live detection",
       "desc": "ZED 2 cameras stream the rows; YOLOv8 flags disease with confidence and location in real time."
